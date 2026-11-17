@@ -81,7 +81,7 @@ and a token from the CLI.
 
 *Simulated dashboard: the panels show what Grafana displays from the traces (tasks, triage latency,
 Guard decisions, shield scores, procedures, Grimoire calls). All numbers are synthetic, generated
-with a fixed random seed. A screenshot of a running Grafana will replace it.*
+with a fixed random seed.*
 
 ## The model: KubeAI and the llama.cpp engine
 
@@ -103,8 +103,8 @@ You use the CLI the same way with either setting.
   reach it.
 - **Models as Kubernetes objects.** You add or swap a model with a small YAML file and
   `kubectl apply`. You do not rebuild Wattson.
-- **A light triage pod.** The model runs in its own pod, so the agents stay small. KubeAI can
-  move the model to a GPU node later without a change to the agents.
+- **A light triage pod.** The model runs in its own pod, so the agents stay small. The model
+  runs on CPU today.
 
 **What it costs**
 
@@ -214,16 +214,14 @@ Set at least these values in `settings.env`:
 
 The agents' tokens are created once in the cluster as Kubernetes Secrets; never commit them.
 
-A general, reusable package (Kustomize or Helm) is planned. See the limitations below.
-
 ## Proof-of-concept limitations
 
 - **One user.** The agents trust one laptop CLI through a port-forward and a token. There is no
   multi-user login.
 - **CPU model only, in the tested setup.** Triage takes a few seconds on CPU. The table above
-  measures one model file; other models and a GPU node were not measured.
-- **Deployment is not packaged yet.** The manifests and scripts still need the cleanup described
-  above. No Helm chart or Kustomize base is published yet.
+  measures one model file; other models were not measured.
+- **Deployment needs manual setup.** The scripts read your own values from `settings.env`
+  (see Kubernetes deployment).
 - **Triage is good, not perfect.** About 8 % of the test requests were classified wrongly. The
   keyword fallback handles low confidence, but a wrong route is still possible.
 - **Read-only evidence is only as good as the commands.** The CLI runs a fixed set of read-only

@@ -1,157 +1,176 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
-  <title>Wattson Agent: architecture (conceptual view, no environment details)</title>
-  <defs>
-    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
-    </marker>
-    <marker id="arrDash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#a0aec0"/>
-    </marker>
-  </defs>
-  <style>
-    .t { font-family: "DejaVu Sans", Arial, sans-serif; fill: #1a202c; }
-    .h { font-size: 18px; font-weight: bold; }
-    .s { font-size: 13px; fill: #4a5568; }
-    .b { font-size: 14px; font-weight: bold; }
-    .n { font-size: 12px; fill: #2d3748; }
-    .box { rx: 10; stroke-width: 1.6; }
-    .edge { fill: none; stroke: #4a5568; stroke-width: 1.8; marker-end: url(#arr); }
-    .soft { fill: none; stroke: #a0aec0; stroke-width: 1.6; stroke-dasharray: 6 5; marker-end: url(#arrDash); }
-    .lbl { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 12px; fill: #2d3748; }
-  </style>
-
-  <rect width="1400" height="820" fill="#ffffff"/>
-  <text x="30" y="40" class="t h">Wattson Agent: how it works</text>
-  <text x="30" y="62" class="t s">Asks in the terminal, read-only evidence, and nothing runs without your yes.</text>
-
-  <!-- ZONE: your laptop -->
-  <rect x="30" y="90" width="360" height="560" class="box" fill="#f7fafc" stroke="#2b6cb0" stroke-dasharray="0"/>
-  <text x="50" y="118" class="t b" fill="#2b6cb0">YOUR LAPTOP</text>
-
-  <rect x="60" y="140" width="300" height="100" class="box" fill="#ebf8ff" stroke="#2b6cb0"/>
-  <text x="80" y="170" class="t b">wattson CLI</text>
-  <text x="80" y="192" class="t n">You ask, read the plan, type yes</text>
-  <text x="80" y="212" class="t n">Shows the exact prompt before it runs</text>
-
-  <rect x="60" y="270" width="300" height="110" class="box" fill="#ebf8ff" stroke="#2b6cb0"/>
-  <text x="80" y="300" class="t b">Connector</text>
-  <text x="80" y="322" class="t n">Runs only the commands the agent asks for</text>
-  <text x="80" y="342" class="t n">git (status, log, diff) and kubectl (read-only)</text>
-  <text x="80" y="362" class="t n">Removes secrets before anything leaves</text>
-
-  <rect x="60" y="410" width="300" height="110" class="box" fill="#ebf8ff" stroke="#2b6cb0"/>
-  <text x="80" y="440" class="t b">Claude Code</text>
-  <text x="80" y="462" class="t n">Runs the approved prompt in your repo</text>
-  <text x="80" y="482" class="t n">Asks its own permission questions</text>
-  <text x="80" y="502" class="t n">The only part that changes files</text>
-
-  <rect x="60" y="550" width="300" height="80" class="box" fill="#ebf8ff" stroke="#2b6cb0"/>
-  <text x="80" y="580" class="t b">Your repository</text>
-  <text x="80" y="602" class="t n">Code, history, and the working tree</text>
-
-  <!-- ZONE: your cluster -->
-  <rect x="470" y="90" width="590" height="560" class="box" fill="#f0fff4" stroke="#2f855a"/>
-  <text x="490" y="118" class="t b" fill="#2f855a">YOUR CLUSTER</text>
-
-  <rect x="500" y="140" width="250" height="110" class="box" fill="#e6fffa" stroke="#2f855a"/>
-  <text x="520" y="170" class="t b">Orchestrator</text>
-  <text x="520" y="192" class="t n">Runs the task in a fixed order</text>
-  <text x="520" y="212" class="t n">Pauses and asks you when it must</text>
-  <text x="520" y="232" class="t n">Keeps task history, not prompts</text>
-
-  <rect x="790" y="140" width="250" height="110" class="box" fill="#e6fffa" stroke="#2f855a"/>
-  <text x="810" y="170" class="t b">Guard and shield</text>
-  <text x="810" y="192" class="t n">Checks requests against your rules</text>
-  <text x="810" y="212" class="t n">Removes prompt-injection text</text>
-  <text x="810" y="232" class="t n">Stops malicious or out-of-scope work</text>
-
-  <rect x="500" y="290" width="250" height="110" class="box" fill="#e6fffa" stroke="#2f855a"/>
-  <text x="520" y="320" class="t b">Triage</text>
-  <text x="520" y="342" class="t n">Classifies the request:</text>
-  <text x="520" y="362" class="t n">help, investigation or engineering</text>
-  <text x="520" y="382" class="t n">Says how sure it is</text>
-
-  <rect x="790" y="290" width="250" height="110" class="box" fill="#e6fffa" stroke="#2f855a"/>
-  <text x="810" y="320" class="t b">Knowledge agent</text>
-  <text x="810" y="342" class="t n">Finds the matching runbooks</text>
-  <text x="810" y="362" class="t n">Read-only, names the documents used</text>
-  <text x="810" y="382" class="t n">Adds past lessons from memory</text>
-
-  <rect x="500" y="440" width="250" height="110" class="box" fill="#e6fffa" stroke="#2f855a"/>
-  <text x="520" y="470" class="t b">Model service</text>
-  <text x="520" y="492" class="t n">Small language model on CPU</text>
-  <text x="520" y="512" class="t n">Starts on demand, stops when idle</text>
-  <text x="520" y="532" class="t n">Used by triage and the Guard</text>
-
-  <rect x="790" y="440" width="250" height="110" class="box" fill="#e6fffa" stroke="#2f855a"/>
-  <text x="810" y="470" class="t b">Traces and dashboard</text>
-  <text x="810" y="492" class="t n">Timings and labels, never content</text>
-  <text x="810" y="512" class="t n">Grafana shows tasks, triage, Guard</text>
-  <text x="810" y="532" class="t n">and the model's speed</text>
-
-  <rect x="500" y="580" width="540" height="50" class="box" fill="#fffaf0" stroke="#c05621"/>
-  <text x="520" y="610" class="t n" fill="#7b341e">Agents hold no laptop credentials. Only the approved prompt reaches Claude Code.</text>
-
-  <!-- ZONE: external -->
-  <rect x="1110" y="90" width="260" height="560" class="box" fill="#faf5ff" stroke="#6b46c1" stroke-dasharray="0"/>
-  <text x="1130" y="118" class="t b" fill="#6b46c1">OUTSIDE SERVICES</text>
-
-  <rect x="1130" y="140" width="220" height="150" class="box" fill="#faf5ff" stroke="#6b46c1"/>
-  <text x="1150" y="170" class="t b">Grimoire</text>
-  <text x="1150" y="192" class="t n">Your knowledge base of runbooks</text>
-  <text x="1150" y="212" class="t n">Reached over a secure link</text>
-  <text x="1150" y="232" class="t n">Read-only: nothing is written back</text>
-
-  <rect x="1130" y="320" width="220" height="130" class="box" fill="#faf5ff" stroke="#6b46c1"/>
-  <text x="1150" y="350" class="t b">Memory (optional)</text>
-  <text x="1150" y="372" class="t n">Past lessons for Claude Code</text>
-  <text x="1150" y="392" class="t n">Read-only, a few lessons</text>
-
-  <rect x="1130" y="480" width="220" height="150" class="box" fill="#faf5ff" stroke="#6b46c1"/>
-  <text x="1150" y="510" class="t b">You</text>
-  <text x="1150" y="532" class="t n">Answer the questions</text>
-  <text x="1150" y="552" class="t n">Approve with yes</text>
-  <text x="1150" y="572" class="t n">Read the results</text>
-
-  <!-- edges -->
-  <path d="M360,195 L500,195" class="edge" style="marker-start:url(#arr);"/>
-  <text x="368" y="186" class="lbl">ask, answers</text>
-
-  <path d="M360,325 L500,200" class="soft"/>
-  <text x="372" y="290" class="lbl">evidence</text>
-
-  <path d="M625,250 L625,290" class="edge"/>
-  <text x="634" y="276" class="lbl">classify</text>
-
-  <path d="M750,195 L790,195" class="soft"/>
-  <text x="752" y="186" class="lbl">checks</text>
-
-  <path d="M790,345 L750,345" class="edge" style="marker-end:none; marker-start:url(#arr);"/>
-  <text x="752" y="336" class="lbl">runbooks</text>
-
-  <path d="M625,400 L625,440" class="edge"/>
-  <text x="634" y="426" class="lbl">model calls</text>
-
-  <path d="M1130,215 L1040,215" class="edge" style="marker-end:none; marker-start:url(#arr);"/>
-  <text x="1048" y="206" class="lbl">read-only</text>
-
-  <path d="M1130,385 L1040,385" class="soft" style="marker-end:none; marker-start:url(#arrDash);"/>
-  <text x="1048" y="376" class="lbl">lessons</text>
-
-  <path d="M1040,520 L1130,520" class="soft"/>
-  <text x="1048" y="512" class="lbl">questions</text>
-
-
-  <!-- flow strip -->
-  <rect x="30" y="690" width="1340" height="110" class="box" fill="#f7fafc" stroke="#cbd5e0"/>
-  <text x="50" y="718" class="t b">One task, step by step</text>
-  <text x="50" y="744" class="t n">1 You ask</text>
-  <text x="170" y="744" class="t n">2 Guard checks the request</text>
-  <text x="380" y="744" class="t n">3 Triage picks the workflow</text>
-  <text x="580" y="744" class="t n">4 Runbooks are found</text>
-  <text x="740" y="744" class="t n">5 Evidence is collected (read-only)</text>
-  <text x="50" y="772" class="t n">6 Shield removes injected text</text>
-  <text x="290" y="772" class="t n">7 You read the prompt and type yes</text>
-  <text x="560" y="772" class="t n">8 Claude Code runs it in your repo</text>
-  <text x="840" y="772" class="t n">9 Every step is traced for the dashboard</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1060" viewBox="0 0 1600 1060" font-family="DejaVu Sans, Arial, sans-serif">
+<rect width="1600" height="1060" fill="#ffffff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#232F3E"/></marker></defs>
+<text x="24" y="38" font-family="DejaVu Sans, Arial, sans-serif" font-size="22" font-weight="bold" fill="#232F3E" text-anchor="start">Wattson Agent: architecture</text>
+<text x="24" y="60" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="normal" fill="#545B64" text-anchor="start">Asks in the terminal, read-only evidence, nothing runs without your yes. Conceptual view: no addresses or environment names.</text>
+<rect x="20" y="80" width="330" height="800" rx="6" fill="#fafbfb" stroke="#2E73B8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="20" y="80" width="330" height="26" rx="6" fill="#2E73B8" fill-opacity="0.12"/>
+<text x="32" y="98" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#2E73B8" text-anchor="start">Your laptop</text>
+<rect x="380" y="80" width="900" height="800" rx="6" fill="#fafbfb" stroke="#ED7100" stroke-width="1.6"/>
+<rect x="380" y="80" width="900" height="26" rx="6" fill="#ED7100" fill-opacity="0.12"/>
+<text x="392" y="98" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#ED7100" text-anchor="start">Your cluster (private, no public address)</text>
+<rect x="1300" y="80" width="280" height="800" rx="6" fill="#fafbfb" stroke="#8C4FFF" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="1300" y="80" width="280" height="26" rx="6" fill="#8C4FFF" fill-opacity="0.12"/>
+<text x="1312" y="98" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#8C4FFF" text-anchor="start">Outside services</text>
+<rect x="40" y="120" width="290" height="96" rx="6" fill="#ffffff" stroke="#2E73B8" stroke-width="1.6"/>
+<g transform="translate(52,132)"><rect width="36" height="36" rx="4" fill="#2E73B8"/><circle cx="18" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2"/><path d="M8 28c1-6 5-8 10-8s9 2 10 8" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="98" y="150" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">You</text>
+<text x="54" y="182" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Ask, answer, approve with yes</text>
+<text x="54" y="199" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read the plan before it runs</text>
+<rect x="40" y="236" width="290" height="116" rx="6" fill="#ffffff" stroke="#2E73B8" stroke-width="1.6"/>
+<g transform="translate(52,248)"><rect width="36" height="36" rx="4" fill="#2E73B8"/><path d="M9 11l7 7-7 7M19 26h9" fill="none" stroke="#fff" stroke-width="2.2"/></g>
+<text x="98" y="266" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">wattson CLI</text>
+<text x="54" y="298" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Asks the agent's questions</text>
+<text x="54" y="315" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Shows the exact prompt</text>
+<text x="54" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Sends it only after yes</text>
+<rect x="40" y="372" width="290" height="116" rx="6" fill="#ffffff" stroke="#7AA116" stroke-width="1.6"/>
+<g transform="translate(52,384)"><rect width="36" height="36" rx="4" fill="#7AA116"/><circle cx="16" cy="16" r="6" fill="none" stroke="#fff" stroke-width="2"/><path d="M21 21l7 7" stroke="#fff" stroke-width="2.2"/></g>
+<text x="98" y="402" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Evidence collector</text>
+<text x="54" y="434" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">git: status, log, diff</text>
+<text x="54" y="451" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">kubectl: read-only reads</text>
+<text x="54" y="468" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Secrets removed before use</text>
+<rect x="40" y="508" width="290" height="116" rx="6" fill="#ffffff" stroke="#8C4FFF" stroke-width="1.6"/>
+<g transform="translate(52,520)"><rect width="36" height="36" rx="4" fill="#8C4FFF"/><path d="M13 11l-6 7 6 7M23 11l6 7-6 7M19 9l-4 20" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="98" y="538" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Claude Code</text>
+<text x="54" y="570" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Runs the approved prompt</text>
+<text x="54" y="587" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">in your repository</text>
+<text x="54" y="604" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Asks its own permissions</text>
+<rect x="40" y="644" width="290" height="80" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1.6"/>
+<g transform="translate(52,656)"><rect width="36" height="36" rx="4" fill="#545B64"/><path d="M9 9h8c2 0 3 1 3 3v15c0-2-1-3-3-3H9z" fill="none" stroke="#fff" stroke-width="2"/><path d="M27 9h-8c-2 0-3 1-3 3v15c0-2 1-3 3-3h8z" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="98" y="674" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Your repository</text>
+<text x="54" y="706" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Code, history, working tree</text>
+<rect x="400" y="120" width="860" height="350" rx="6" fill="#fafbfb" stroke="#01A88D" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="400" y="120" width="860" height="26" rx="6" fill="#01A88D" fill-opacity="0.12"/>
+<text x="412" y="138" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#01A88D" text-anchor="start">Agents and models</text>
+<rect x="420" y="160" width="250" height="120" rx="6" fill="#ffffff" stroke="#01A88D" stroke-width="1.6"/>
+<g transform="translate(432,172)"><rect width="36" height="36" rx="4" fill="#01A88D"/><circle cx="18" cy="18" r="3" fill="#fff"/><circle cx="9" cy="10" r="2.5" fill="#fff"/><circle cx="27" cy="10" r="2.5" fill="#fff"/><circle cx="9" cy="26" r="2.5" fill="#fff"/><circle cx="27" cy="26" r="2.5" fill="#fff"/><path d="M9 10L18 18M27 10L18 18M9 26L18 18M27 26L18 18" stroke="#fff" stroke-width="1.6"/></g>
+<text x="478" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Orchestrator</text>
+<text x="434" y="222" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Runs the task in a fixed order</text>
+<text x="434" y="239" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Pauses to ask you when needed</text>
+<text x="434" y="256" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Keeps task history, no prompts</text>
+<rect x="700" y="160" width="250" height="120" rx="6" fill="#ffffff" stroke="#01A88D" stroke-width="1.6"/>
+<g transform="translate(712,172)"><rect width="36" height="36" rx="4" fill="#01A88D"/><rect x="12" y="12" width="12" height="12" fill="none" stroke="#fff" stroke-width="2"/><path d="M15 8v4M21 8v4M15 24v4M21 24v4M8 15h4M8 21h4M24 15h4M24 21h4" stroke="#fff" stroke-width="2"/></g>
+<text x="758" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Triage</text>
+<text x="714" y="222" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Classifies the request</text>
+<text x="714" y="239" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Picks the workflow</text>
+<text x="714" y="256" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Says how sure it is</text>
+<rect x="980" y="160" width="250" height="120" rx="6" fill="#ffffff" stroke="#01A88D" stroke-width="1.6"/>
+<g transform="translate(992,172)"><rect width="36" height="36" rx="4" fill="#01A88D"/><path d="M9 9h8c2 0 3 1 3 3v15c0-2-1-3-3-3H9z" fill="none" stroke="#fff" stroke-width="2"/><path d="M27 9h-8c-2 0-3 1-3 3v15c0-2 1-3 3-3h8z" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="1038" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Knowledge agent</text>
+<text x="994" y="222" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Finds matching runbooks</text>
+<text x="994" y="239" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read-only, names the documents</text>
+<text x="994" y="256" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Adds past lessons (optional)</text>
+<rect x="420" y="320" width="250" height="120" rx="6" fill="#ffffff" stroke="#DD344C" stroke-width="1.6"/>
+<g transform="translate(432,332)"><rect width="36" height="36" rx="4" fill="#DD344C"/><path d="M18 8l9 3v7c0 5-4 9-9 11-5-2-9-6-9-11v-7z" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="478" y="350" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Guard and shield</text>
+<text x="434" y="382" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Checks requests against your rules</text>
+<text x="434" y="399" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Removes injected instructions</text>
+<text x="434" y="416" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Stops malicious or out-of-scope work</text>
+<rect x="700" y="320" width="250" height="120" rx="6" fill="#ffffff" stroke="#01A88D" stroke-width="1.6"/>
+<g transform="translate(712,332)"><rect width="36" height="36" rx="4" fill="#01A88D"/><rect x="12" y="12" width="12" height="12" fill="none" stroke="#fff" stroke-width="2"/><path d="M15 8v4M21 8v4M15 24v4M21 24v4M8 15h4M8 21h4M24 15h4M24 21h4" stroke="#fff" stroke-width="2"/></g>
+<text x="758" y="350" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Model service</text>
+<text x="714" y="382" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Small language model on CPU</text>
+<text x="714" y="399" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Starts on demand, stops when idle</text>
+<text x="714" y="416" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Used by triage and the Guard</text>
+<rect x="980" y="320" width="250" height="120" rx="6" fill="#ffffff" stroke="#E7157B" stroke-width="1.6"/>
+<g transform="translate(992,332)"><rect width="36" height="36" rx="4" fill="#E7157B"/><path d="M7 24l5-6 4 4 5-8 4 5 4-7" fill="none" stroke="#fff" stroke-width="2.2"/></g>
+<text x="1038" y="350" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Tracing</text>
+<text x="994" y="382" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Timings and labels, never content</text>
+<text x="994" y="399" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">One trace per step of each task</text>
+<rect x="400" y="490" width="860" height="170" rx="6" fill="#fafbfb" stroke="#7AA116" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="400" y="490" width="860" height="26" rx="6" fill="#7AA116" fill-opacity="0.12"/>
+<text x="412" y="508" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#7AA116" text-anchor="start">Support services</text>
+<rect x="420" y="530" width="250" height="120" rx="6" fill="#ffffff" stroke="#7AA116" stroke-width="1.6"/>
+<g transform="translate(432,542)"><rect width="36" height="36" rx="4" fill="#7AA116"/><rect x="11" y="17" width="14" height="11" fill="none" stroke="#fff" stroke-width="2"/><path d="M14 17v-3a4 4 0 0 1 8 0v3" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="478" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Settings and secrets</text>
+<text x="434" y="592" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read-only access for the agents</text>
+<text x="434" y="609" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">No cluster keys in the agents</text>
+<text x="434" y="626" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Network rules: only what is needed</text>
+<rect x="700" y="530" width="250" height="120" rx="6" fill="#ffffff" stroke="#7AA116" stroke-width="1.6"/>
+<g transform="translate(712,542)"><rect width="36" height="36" rx="4" fill="#7AA116"/><ellipse cx="18" cy="11" rx="8" ry="3" fill="none" stroke="#fff" stroke-width="2"/><path d="M10 11v13c0 2 4 3 8 3s8-1 8-3V11M10 17c0 2 4 3 8 3s8-1 8-3" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="758" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Task history</text>
+<text x="714" y="592" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Ids, names and statuses</text>
+<text x="714" y="609" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Kept for a limited time</text>
+<text x="714" y="626" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">No prompt text stored</text>
+<rect x="980" y="530" width="250" height="120" rx="6" fill="#ffffff" stroke="#E7157B" stroke-width="1.6"/>
+<g transform="translate(992,542)"><rect width="36" height="36" rx="4" fill="#E7157B"/><rect x="9" y="18" width="4" height="9" fill="#fff"/><rect x="16" y="12" width="4" height="15" fill="#fff"/><rect x="23" y="8" width="4" height="19" fill="#fff"/></g>
+<text x="1038" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Dashboard</text>
+<text x="994" y="592" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Grafana on the traces</text>
+<text x="994" y="609" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Tasks, triage, Guard, model</text>
+<text x="994" y="626" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Reads traces only</text>
+<rect x="400" y="680" width="860" height="160" rx="6" fill="#ffffff" stroke="#DD344C" stroke-width="1.6"/>
+<g transform="translate(412,692)"><rect width="36" height="36" rx="4" fill="#DD344C"/><path d="M18 8l9 3v7c0 5-4 9-9 11-5-2-9-6-9-11v-7z" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="458" y="710" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Guarantees</text>
+<text x="414" y="742" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read-only by default: nothing changes your cluster or your repository</text>
+<text x="414" y="759" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Claude Code runs only the exact prompt you approved</text>
+<text x="414" y="776" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Agents never hold your cluster access; the laptop runs the read-only commands</text>
+<text x="414" y="793" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">No public address: you reach the orchestrator through a secure tunnel</text>
+<text x="414" y="810" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Secrets are removed before anything leaves the laptop and before any prompt</text>
+<rect x="1320" y="120" width="240" height="110" rx="6" fill="#ffffff" stroke="#8C4FFF" stroke-width="1.6"/>
+<g transform="translate(1332,132)"><rect width="36" height="36" rx="4" fill="#8C4FFF"/><path d="M9 9h8c2 0 3 1 3 3v15c0-2-1-3-3-3H9z" fill="none" stroke="#fff" stroke-width="2"/><path d="M27 9h-8c-2 0-3 1-3 3v15c0-2 1-3 3-3h8z" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="1378" y="150" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Grimoire</text>
+<text x="1334" y="182" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Your runbook store</text>
+<text x="1334" y="199" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read-only, nothing written back</text>
+<rect x="1320" y="250" width="240" height="110" rx="6" fill="#ffffff" stroke="#8C4FFF" stroke-width="1.6"/>
+<g transform="translate(1332,262)"><rect width="36" height="36" rx="4" fill="#8C4FFF"/><ellipse cx="18" cy="11" rx="8" ry="3" fill="none" stroke="#fff" stroke-width="2"/><path d="M10 11v13c0 2 4 3 8 3s8-1 8-3V11M10 17c0 2 4 3 8 3s8-1 8-3" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="1378" y="280" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Memory (optional)</text>
+<text x="1334" y="312" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Past lessons for Claude Code</text>
+<text x="1334" y="329" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read-only, a few per request</text>
+<rect x="1320" y="380" width="240" height="130" rx="6" fill="#ffffff" stroke="#8C4FFF" stroke-width="1.6"/>
+<g transform="translate(1332,392)"><rect width="36" height="36" rx="4" fill="#8C4FFF"/><path d="M12 26h14a5 5 0 0 0 0-10 7 7 0 0 0-13-2 5 5 0 0 0-1 12z" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="1378" y="410" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">Claude service</text>
+<text x="1334" y="442" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Called by Claude Code on your laptop</text>
+<text x="1334" y="459" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Not called by the cluster</text>
+<rect x="1320" y="540" width="240" height="110" rx="6" fill="#ffffff" stroke="#8C4FFF" stroke-width="1.6"/>
+<g transform="translate(1332,552)"><rect width="36" height="36" rx="4" fill="#8C4FFF"/><circle cx="18" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2"/><path d="M8 28c1-6 5-8 10-8s9 2 10 8" fill="none" stroke="#fff" stroke-width="2"/></g>
+<text x="1378" y="570" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">You</text>
+<text x="1334" y="602" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Answer the questions</text>
+<text x="1334" y="619" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">Read the results</text>
+<path d="M185,216 L185,236" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<circle cx="200" cy="226" r="11" fill="#232F3E"/>
+<text x="200" y="230" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+<path d="M330,294 L370,294 L370,220 L420,220" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M420,220 L370,220 L370,294 L330,294" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="none" stroke-dasharray="0"/>
+<text x="300" y="312" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="normal" fill="#545B64" text-anchor="start">secure tunnel</text>
+<path d="M670,220 L700,220" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<circle cx="685" cy="206" r="11" fill="#232F3E"/>
+<text x="685" y="210" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+<path d="M825,280 L825,320" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<circle cx="840" cy="300" r="11" fill="#232F3E"/>
+<text x="840" y="304" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+<path d="M545,280 L545,320" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<circle cx="560" cy="300" r="11" fill="#232F3E"/>
+<text x="560" y="304" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+<path d="M670,380 L700,380" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M1230,200 L1275,200 L1275,175 L1320,175" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<circle cx="1276" cy="186" r="11" fill="#232F3E"/>
+<text x="1276" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+<path d="M1230,260 L1275,260 L1275,305 L1320,305" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M1105,280 L1105,320" fill="none" stroke="#E7157B" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M1105,440 L1105,530" fill="none" stroke="#E7157B" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<circle cx="1120" cy="486" r="11" fill="#232F3E"/>
+<text x="1120" y="490" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">9</text>
+<circle cx="200" cy="362" r="11" fill="#232F3E"/>
+<text x="200" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">5</text>
+<circle cx="200" cy="498" r="11" fill="#232F3E"/>
+<text x="200" y="502" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">8</text>
+<circle cx="322" cy="246" r="11" fill="#232F3E"/>
+<text x="322" y="250" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">7</text>
+<circle cx="662" cy="326" r="11" fill="#232F3E"/>
+<text x="662" y="330" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">6</text>
+<path d="M185,352 L185,372" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M185,488 L185,508" fill="none" stroke="#232F3E" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="20" y="900" width="1560" height="130" rx="6" fill="#fafbfb" stroke="#232F3E" stroke-width="1.6"/>
+<rect x="20" y="900" width="1560" height="26" rx="6" fill="#232F3E" fill-opacity="0.12"/>
+<text x="32" y="918" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" fill="#232F3E" text-anchor="start">One task, step by step</text>
+<text x="44" y="936" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">1  You ask the question in the terminal</text>
+<text x="564" y="936" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">2  The Guard checks the request and your rules</text>
+<text x="1084" y="936" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">3  Triage picks the workflow and says how sure it is</text>
+<text x="44" y="960" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">4  The knowledge agent finds the runbooks (read-only)</text>
+<text x="564" y="960" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">5  The evidence collector gathers read-only facts</text>
+<text x="1084" y="960" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">6  The shield removes injected instructions</text>
+<text x="44" y="984" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">7  You read the exact prompt and type yes</text>
+<text x="564" y="984" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">8  Claude Code runs it in your repository</text>
+<text x="1084" y="984" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="normal" fill="#232F3E" text-anchor="start">9  Every step is traced for the dashboard</text>
+<text x="44" y="1014" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="normal" fill="#545B64" text-anchor="start">No model runs on your laptop. Nothing changes your cluster. Traces contain timings, never content.</text>
 </svg>

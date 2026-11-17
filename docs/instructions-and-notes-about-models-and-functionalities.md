@@ -162,22 +162,7 @@ Notes from what we measured:
 - **ProtectAI v2** flagged a third of the normal DevOps texts: not usable for us.
 - **Llama Prompt Guard 2** needs Meta's approval to download: not measured.
 
-## 7. Options for bigger models (not built; your decision)
-
-| Option | What | Cost | Catch |
-|---|---|---|---|
-| **Granite Guardian 4.1 8B in KubeAI** | IBM's safety model, official GGUF (`ibm-granite/granite-guardian-4.1-8b-GGUF`), as a second KubeAI Model for the Guard | $0, stays in the cluster | on CPU about 20–25 s per call (estimate, to measure); the 8B needed 6–8 CPU before |
-| **SageMaker** (AWS) | your own model (Granite, Guardian) on a GPU endpoint that goes to 0 machines; Strands already has `SageMakerAIModel` | about $1.13/h for ml.g6.xlarge (L4) while it runs, $0 idle | minutes to wake up, and requests fail meanwhile (the rules decide); the text goes to AWS |
-| **Bedrock** (AWS) | pay per token: gpt-oss-safeguard-20b; Bedrock Guardrails (prompt attacks, denied topics) on any text | cents for our evals | the text goes to AWS |
-| **Groq** free tier | gpt-oss-safeguard-20b, Llama Prompt Guard 2 | $0 within its limits | public service; limits change |
-| **Modal** | your own model on a GPU, scales to 0 | $30 free credits a month | public service |
-| **A GPU node on my-cluster** | an AWS GPU machine that joins the cluster only when needed (Auto Scaling Group from 0, Cluster Autoscaler) | about $0.17–0.29/h on spot, only while it runs | a VPN, and the company's OK: an outside machine joins the shared cluster |
-
-Biggest IBM models today: Granite-4.2-30B (29.3 billion parameters, context 131,072; needs a 48 GB
-GPU in 8-bit), Granite-4.2-8B, Granite Guardian 4.1 8B. For tests, use only the made-up eval cases,
-never real tasks, with any outside service.
-
-## 8. What goes to the traces (OpenTelemetry)
+## 7. What goes to the traces (OpenTelemetry)
 
 The three agents send a trace of each task to Tempo (`wattson-tempo`), and the Grafana dashboard
 "Wattson Agent" reads it. **Only ids, names, labels, numbers and statuses**: never the request,
@@ -208,7 +193,7 @@ the evidence, the documents or the prompt (Strands' own content fields are repla
 New panels come with `bash k8s/grafana.sh --apply` (run it again after the monitoring Grafana
 restarts). New data shows in the panels a few minutes late.
 
-## 9. Where to read more
+## 8. Where to read more
 
 - `docs/study/guardrails.md`: the injection-model study (numbers, design, how to switch models)
 - `running.md`, "The Guard": modes, rules, tests, Grafana
