@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use Wattson Agent, please cite it as below."
+title: "Wattson Agent: a proof of concept of a personal engineering agent"
+type: software
+version: 0.1.0
+date-released: 2026-11-17
+license: Apache-2.0
+repository-code: "https://github.com/Minelli-D/Wattson-Agent"
+authors:
+  - family-names: Minelli
+    given-names: Davide
+keywords:
+  - AI agents
+  - Strands Agents
+  - A2A
+  - Kubernetes
+  - KubeAI
+  - prompt injection
+  - Cedar

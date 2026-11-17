@@ -2,7 +2,7 @@
 
 # Wattson Agent
 
-![Wattson Agent: architecture](docs/architecture.svg)
+![Wattson Agent: architecture](https://raw.githubusercontent.com/Minelli-D/Wattson-Agent/main/docs/architecture.svg)
 
 Wattson Agent is a proof of concept (POC) of a **personal engineering agent**. You ask a question
 in the terminal. The agent finds the matching runbook, collects only the facts it needs from your
@@ -231,4 +231,38 @@ The agents' tokens are created once in the cluster as Kubernetes Secrets; never 
 
 ## License and citation
 
-License: *to be added before publication.* Citation: *to be added with the first release.*
+Wattson Agent is released under the [Apache License 2.0](LICENSE) (see also [NOTICE](NOTICE)).
+
+To cite this project, use the [CITATION.cff](CITATION.cff) file, or:
+
+```bibtex
+@software{minelli_wattson_agent_2026,
+  author  = {Minelli, Davide},
+  title   = {Wattson Agent: a proof of concept of a personal engineering agent},
+  year    = {2026},
+  url     = {https://github.com/Minelli-D/Wattson-Agent},
+  license = {Apache-2.0}
+}
+```
+
+### References
+
+The project uses these sources. The models are downloaded when you deploy; they are not part of
+this repository, and each one is licensed by its publisher (check its model card).
+
+- Strands Agents SDK: https://strandsagents.com
+- A2A (Agent-to-Agent) protocol: https://github.com/a2aproject/A2A
+- Cedar policy language: https://www.cedarpolicy.com
+- Model Context Protocol (MCP): https://modelcontextprotocol.io
+- KubeAI, the model operator: https://github.com/kubeai-project/kubeai
+- llama.cpp, the model engine: https://github.com/ggml-org/llama.cpp
+- IBM Granite 4.2 3B (GGUF, Q4_K_M): https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF
+- Horizon Labs prompt-injection model: https://huggingface.co/Horizon-Labs/prompt-injection-guard-small
+- BAAI bge-small-en-v1.5 (embeddings, used by the optional memory): https://huggingface.co/BAAI/bge-small-en-v1.5
+- Cognee, the optional memory: https://github.com/topoteretes/cognee
+- Grafana Tempo and Grafana: https://grafana.com/oss/tempo/ and https://grafana.com/oss/grafana/
+- OpenTelemetry: https://opentelemetry.io
+- Claude Code: https://docs.anthropic.com/en/docs/claude-code
+
+Grimoire, the runbook store the knowledge agent reads, is an external service; it is not part of
+this repository.
