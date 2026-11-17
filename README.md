@@ -22,8 +22,46 @@ wattson ask "why does the api deployment keep restarting?" --cluster <your-kube-
 wattson ask "which deployments are not ready?" --cluster <your-kube-context> -A   # all namespaces
 ```
 
+## Why Wattson
+
+The POC started from an idea that came up during a discussion at an AWS Tech Event, where the
+Strands SDK was presented. It sparked my curiosity. About a year earlier I had tried to build an
+agent, but I faced challenges because of limited resources and a lack of standardization, and
+every day a new solution seemed to appear.
+
+The goal is one question: can an agent return the most relevant information about my Kubernetes
+cluster without exposing sensitive information?
+
+An LLM cannot guarantee a correct or repeatable answer, so Wattson does not let it decide what
+may run. Cedar is different: it evaluates a policy deterministically, so the same request and
+context always get the same allow or deny. In Wattson the model proposes, and two Cedar policies
+decide. They allow every orchestration step except running Claude Code on your laptop, which they
+allow only after you approve that exact prompt. Cedar denies by default.
+
+The most interesting part of the Strands SDK, for me, was OpenTelemetry. I built a Grafana
+dashboard with metrics without much effort, which made it possible to track what the agent does.
+
+After a few tests I started thinking about prompt-injection patterns and other risks. I used the
+OWASP Top 10 for Agentic Applications 2026 and the OWASP Top 10 for LLM Applications 2025 as a
+checklist: the Guard rules are mapped to them (and to MITRE ATT&CK and MITRE ATLAS). The rules
+are written as Cedar policies and a YAML rule file, and Cedar denies any action that no permit
+allows.
+
+I also added a small classifier for prompt injection. It scores each part of the evidence and of
+the documents, and a score above the threshold removes that part before it reaches a prompt. A
+classifier can also miss attacks, so the Cedar policies stay as the fixed layer around it.
+
+To improve the context, the agent uses a memory of past lessons (Cognee in this release) together
+with Grimoire, my knowledge base of runbooks, and a workbook of notes. This made my day-to-day
+sessions better. The memory and the runbooks are kept outside the coding agent, so they can be
+reused if another provider is added later (Codex is not implemented yet).
+
+Building the POC was fun. It let me learn new patterns and move forward in technology and
+architecture, and it was a real challenge.
+
 ## Contents
 
+- [Why Wattson](#why-wattson)
 - [How one request flows](#how-one-request-flows)
 - [The components](#the-components)
 - [The model: KubeAI and the llama.cpp engine](#the-model-kubeai-and-the-llamacpp-engine)
@@ -263,6 +301,9 @@ this repository, and each one is licensed by its publisher (check its model card
 - Grafana Tempo and Grafana: https://grafana.com/oss/tempo/ and https://grafana.com/oss/grafana/
 - OpenTelemetry: https://opentelemetry.io
 - Claude Code: https://docs.anthropic.com/en/docs/claude-code
+- OWASP Top 10 for Agentic Applications 2026: https://genai.owasp.org
+- OWASP Top 10 for LLM Applications 2025: https://genai.owasp.org
+- MITRE ATT&CK: https://attack.mitre.org and MITRE ATLAS: https://atlas.mitre.org
 
 Grimoire, the runbook store the knowledge agent reads, is an external service; it is not part of
 this repository.
