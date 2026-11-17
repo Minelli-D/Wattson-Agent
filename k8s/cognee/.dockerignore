@@ -1,0 +1,7 @@
+# The build of the cognee-mcp image gets only the files it is made of.
+*
+!pyproject.toml
+!uv.lock
+!models.txt
+!fetch_models.py
+!api_start.py

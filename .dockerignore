@@ -1,0 +1,8 @@
+# The build gets only what the image is made of: pyproject.toml, uv.lock and src/.
+# Everything else (tests, docs, eval models, .venv, .git, settings) stays out.
+*
+!pyproject.toml
+!uv.lock
+!src/
+**/__pycache__
+**/*.pyc

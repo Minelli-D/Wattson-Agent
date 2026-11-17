@@ -1,0 +1,49 @@
+# The Python packages of the cognee-mcp image (k8s/cognee/Dockerfile), and nothing else: not
+# Wattson's (they are in the pyproject.toml at the root). uv.lock next to this file pins every
+# package with its SHA-256; the image is built from it exactly (uv sync --frozen).
+#
+# cognee 1.6.5 (PyPI) with the "gliner" extra: the local GLiNER model extracts the graph when no
+# LLM key is set, and fastembed (a core dependency of cognee) makes the embeddings on the CPU.
+# The MCP server itself is the folder cognee-mcp/src of the release tag v1.6.5 (the Dockerfile
+# downloads its files by SHA-256); here are the packages its own pyproject.toml asks for, at the
+# versions of its uv.lock at that tag, without the extras we do not use (docs = unstructured,
+# postgres, neo4j: we run on the embedded stores).
+#
+# To lock again (after a change here), with the uv of the Dockerfile:
+#   docker run --rm --network host -v "$PWD/k8s/cognee:/w" -w /w ghcr.io/astral-sh/uv:0.13.5 lock
+[project]
+name = "wattson-cognee-image"
+version = "1.6.5"
+requires-python = "==3.12.*"
+dependencies = [
+    "cognee[gliner]==1.6.5",
+    "fastmcp==3.4.6",
+    "mcp==1.28.1",
+    "httpx>=0.27.0,<1.0.0",
+    "dateparser>=1.2,<2",
+    "torch>=2.1,<3",
+    # The version of cognee's own uv.lock at v1.6.5: cognee's GLiNER code uses inner modules
+    # of gliner2 (its chunking and word splitter), so not a newer one that cognee was not
+    # tested with.
+    "gliner2==2.0.0",
+]
+
+[tool.uv]
+# Not a package: only its dependencies are installed.
+package = false
+# The cluster runs linux/amd64 only.
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Nothing newer than this date (a guard against a package published a moment ago).
+exclude-newer = "2026-10-26T00:00:00Z"
+# The same bound as cognee's own pyproject.toml (onnxruntime 1.24 dropped wheels it needs).
+constraint-dependencies = ["onnxruntime<=1.23.2"]
+
+# torch from the CPU wheel index of PyTorch: the PyPI wheel brings the CUDA libraries (4 GB),
+# and the cluster has no GPU. The same as cognee-mcp's pyproject.toml.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]

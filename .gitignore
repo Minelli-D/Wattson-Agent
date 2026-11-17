@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# local data of dev agents (task history, Grimoire tokens)
+.data/
+# downloaded model files for the evaluation
+eval/models/
+*.gguf
+.env
+*.local
+
+# Claude Code worktrees of parallel sessions
+.claude/
+
+# the HTML pages of the study documents (made by docs/study/build_html.py)
+docs/study/html/
+
+# the real settings: copy settings.env.example and fill in your values
+settings.env

@@ -1,0 +1,3 @@
+#!/bin/sh
+# A stand-in for $EDITOR: appends one line to the file it is given.
+printf '%s\n' "Also check the memory limit of the api container." >> "$1"

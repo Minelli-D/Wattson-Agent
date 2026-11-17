@@ -1,0 +1,3 @@
+# The build of the web UI image needs no file from here: its source comes from the pinned
+# archive in the Dockerfile (checked by SHA-256).
+*

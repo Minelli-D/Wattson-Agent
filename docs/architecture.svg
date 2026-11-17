@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000" role="img" aria-labelledby="t d">
+  <title id="t">Wattson Agent: how it works</title>
+  <desc id="d">Wattson Agent. A CLI on the laptop (the wattson command) talks A2A through kubectl port-forward to an orchestrator agent on Kubernetes. The orchestrator calls a triage agent (Granite on CPU, through KubeAI with its llama.cpp engine, or a llama.cpp sidecar), traces go to Tempo and Grafana and a knowledge agent (Grimoire MCP) over A2A, asks the user at four points, and has Claude Code run on the laptop only after the user types yes.</desc>
+  <defs>
+    <marker id="a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a742ff"/>
+    </marker>
+    <marker id="a-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f5cd45"/>
+    </marker>
+    <marker id="a-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c3a6e8"/>
+    </marker>
+    <style>
+      text { font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif; fill: #f2ecfa; }
+      .mono { font-family: "JetBrains Mono", Consolas, "DejaVu Sans Mono", monospace; }
+      .h1 { font-size: 30px; font-weight: 700; }
+      .sub { font-size: 15px; fill: #c3a6e8; }
+      .panel { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; fill: #f5cd45; }
+      .title { font-size: 18px; font-weight: 700; }
+      .kind { font-size: 12.5px; fill: #d9b3ff; }
+      .line { font-size: 13px; fill: #f2ecfa; }
+      .small { font-size: 12px; fill: #c3a6e8; }
+      .label { font-size: 12px; font-weight: 700; fill: #d9b3ff; }
+      .step-n { font-size: 13px; font-weight: 700; fill: #1a1a1d; }
+      .step-t { font-size: 14px; font-weight: 700; }
+      .step-l { font-size: 12px; fill: #e6dcf2; }
+      .badge { font-size: 12px; font-weight: 700; fill: #1a1a1d; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="1000" rx="22" fill="#1a1a1d"/>
+
+  <!-- title -->
+  <text x="40" y="58" class="h1"><tspan fill="#f5cd45">Wattson Agent</tspan> · how it works</text>
+  <text x="40" y="88" class="sub">Strands agents talking A2A on Kubernetes · Granite on CPU · Claude Code on your laptop · nothing runs without your yes</text>
+
+  <!-- ================= laptop ================= -->
+  <rect x="30" y="118" width="420" height="562" rx="18" fill="#26131f" stroke="#6a1e55" stroke-width="2"/>
+  <text x="54" y="148" class="panel">YOUR LAPTOP</text>
+
+  <rect x="60" y="166" width="360" height="66" rx="12" fill="#3b1c32" stroke="#6a1e55"/>
+  <text x="80" y="194" class="title">You, in the terminal</text>
+  <text x="80" y="218" class="line mono" font-size="13">wattson ask "…"</text>
+  <circle cx="404" cy="182" r="11" fill="#f5cd45"/><text x="404" y="186" class="badge" text-anchor="middle">1</text>
+
+  <line x1="240" y1="232" x2="240" y2="262" stroke="#c3a6e8" stroke-width="2" marker-end="url(#a-soft)"/>
+
+  <rect x="60" y="264" width="360" height="122" rx="12" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+  <text x="80" y="292" class="title">wattson CLI</text>
+  <text x="80" y="312" class="kind">A2A client · no model, no background service</text>
+  <text x="80" y="336" class="line">• asks you the agent's questions</text>
+  <text x="80" y="356" class="line">• shows the prompt and its sources</text>
+  <text x="80" y="376" class="line">• sends nothing before you type yes</text>
+  <g>
+    <circle cx="332" cy="282" r="11" fill="#f5cd45"/><text x="332" y="286" class="badge" text-anchor="middle">4</text>
+    <circle cx="358" cy="282" r="11" fill="#f5cd45"/><text x="358" y="286" class="badge" text-anchor="middle">5</text>
+    <circle cx="384" cy="282" r="11" fill="#f5cd45"/><text x="384" y="286" class="badge" text-anchor="middle">7</text>
+  </g>
+
+  <text x="60" y="418" class="small">Connector: runs only what the agent asks, read-only</text>
+  <line x1="240" y1="386" x2="240" y2="402" stroke="#c3a6e8" stroke-width="2"/>
+
+  <rect x="60" y="430" width="110" height="88" rx="10" fill="#3b1c32" stroke="#6a1e55"/>
+  <text x="115" y="458" class="title" text-anchor="middle" font-size="16">git</text>
+  <text x="115" y="480" class="small" text-anchor="middle">status, log,</text>
+  <text x="115" y="497" class="small" text-anchor="middle">a few files</text>
+
+  <rect x="185" y="430" width="110" height="88" rx="10" fill="#3b1c32" stroke="#6a1e55"/>
+  <text x="240" y="458" class="title" text-anchor="middle" font-size="16">kubectl</text>
+  <text x="240" y="480" class="small" text-anchor="middle">read-only</text>
+  <text x="240" y="497" class="small" text-anchor="middle">account</text>
+
+  <rect x="310" y="430" width="110" height="88" rx="10" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+  <text x="365" y="458" class="title" text-anchor="middle" font-size="16">Claude</text>
+  <text x="365" y="477" class="title" text-anchor="middle" font-size="16">Code</text>
+  <text x="365" y="497" class="small" text-anchor="middle">its own prompts</text>
+  <circle cx="408" cy="440" r="11" fill="#f5cd45"/><text x="408" y="444" class="badge" text-anchor="middle">8</text>
+
+  <rect x="60" y="540" width="360" height="54" rx="10" fill="#1a1a1d" stroke="#6a1e55" stroke-dasharray="5 4"/>
+  <text x="240" y="563" class="line" text-anchor="middle">Secrets are removed before anything</text>
+  <text x="240" y="582" class="line" text-anchor="middle">leaves the laptop</text>
+
+  <text x="60" y="624" class="small">Your repos · your clusters (kubectl never changes them)</text>
+  <text x="60" y="644" class="small">Claude Code works in the repo, as always</text>
+
+  <!-- ================= cluster ================= -->
+  <rect x="520" y="118" width="850" height="562" rx="18" fill="#26131f" stroke="#6a1e55" stroke-width="2"/>
+  <text x="544" y="148" class="panel">KUBERNETES · K8s</text>
+  <text x="742" y="148" class="small">namespace grimoire: Wattson Agent, Tempo, Grimoire · namespace kubeai: KubeAI</text>
+
+  <!-- orchestrator -->
+  <rect x="590" y="172" width="330" height="200" rx="14" fill="#3b1c32" stroke="#f5cd45" stroke-width="2.5"/>
+  <text x="612" y="202" class="title">orchestrator</text>
+  <text x="612" y="222" class="kind">Strands Agent · A2A server · no Service, no Ingress</text>
+  <text x="612" y="250" class="line">• steps in a fixed order (no AI decides)</text>
+  <text x="612" y="272" class="line">• asks you: A2A "input-required"</text>
+  <text x="612" y="294" class="line">• approval gate: Claude Code only after yes</text>
+  <text x="612" y="316" class="line">• prompt from a fixed template</text>
+  <text x="612" y="338" class="line">• history: ids, hashes, status (SQLite)</text>
+  <text x="612" y="358" class="small">never the prompt text, the documents or the logs</text>
+  <circle cx="878" cy="192" r="11" fill="#c3a6e8"/><text x="878" y="196" class="badge" text-anchor="middle">6</text>
+  <circle cx="904" cy="192" r="11" fill="#c3a6e8"/><text x="904" y="196" class="badge" text-anchor="middle">9</text>
+
+  <!-- triage, with today's model server inside its pod -->
+  <rect x="990" y="172" width="350" height="162" rx="14" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+  <text x="1012" y="202" class="title">triage</text>
+  <text x="1012" y="222" class="kind">Strands Agent · sorts the request, says how sure</text>
+  <circle cx="1322" cy="192" r="11" fill="#c3a6e8"/><text x="1322" y="196" class="badge" text-anchor="middle">2</text>
+  <rect x="1010" y="236" width="310" height="84" rx="10" fill="#26131f" stroke="#6a1e55"/>
+  <text x="1028" y="258" class="line" font-weight="700">asks the model over an OpenAI API</text>
+  <text x="1028" y="280" class="line">today: KubeAI (MODEL_BACKEND=kubeai)</text>
+  <text x="1028" y="302" class="small">or a llama.cpp sidecar in this pod (=sidecar)</text>
+
+  <!-- KubeAI: the model server in use (MODEL_BACKEND=kubeai) -->
+  <line x1="1165" y1="334" x2="1165" y2="364" stroke="#c3a6e8" stroke-width="2.5" marker-end="url(#a-soft)"/>
+  <text x="1176" y="353" class="label">OpenAI API</text>
+  <rect x="990" y="366" width="350" height="140" rx="14" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+  <text x="1012" y="394" class="title">KubeAI</text>
+  <text x="1082" y="394" class="kind">namespace kubeai · Helm chart 0.24</text>
+  <text x="1012" y="420" class="line">• Granite-4.0-H-1B · 4-bit · llama.cpp engine</text>
+  <text x="1012" y="442" class="line">• 0 pods when idle; 4–6 cores when it runs</text>
+  <text x="1012" y="464" class="line">• 3.1 s per triage · 91.7 % right</text>
+  <text x="1012" y="486" class="small">operator + proxy · its own network rules</text>
+
+  <!-- knowledge -->
+  <rect x="590" y="430" width="330" height="160" rx="14" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+  <text x="612" y="460" class="title">knowledge</text>
+  <text x="612" y="480" class="kind">Strands Agent · finds your runbooks</text>
+  <text x="612" y="508" class="line">• MCP client of Grimoire</text>
+  <text x="612" y="530" class="line">• read-only tools only</text>
+  <text x="612" y="552" class="line">• OAuth login: the token stays here</text>
+  <text x="612" y="574" class="small">says which documents it used</text>
+  <circle cx="904" cy="450" r="11" fill="#c3a6e8"/><text x="904" y="454" class="badge" text-anchor="middle">3</text>
+
+  <!-- Grimoire -->
+  <rect x="990" y="526" width="350" height="110" rx="14" fill="#26131f" stroke="#f5cd45" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="1012" y="556" class="title" font-size="16">Grimoire (your knowledge base)</text>
+  <text x="1012" y="580" class="line">its MCP server, over HTTPS</text>
+  <text x="1012" y="602" class="small mono">grimoire.example.com</text>
+  <text x="1012" y="622" class="small">nothing is written back</text>
+
+  <!-- A2A arrows -->
+  <line x1="920" y1="252" x2="988" y2="252" stroke="#a742ff" stroke-width="3" marker-end="url(#a-violet)" marker-start="url(#a-violet)"/>
+  <text x="954" y="242" class="label" text-anchor="middle">A2A</text>
+  <line x1="755" y1="372" x2="755" y2="428" stroke="#a742ff" stroke-width="3" marker-end="url(#a-violet)" marker-start="url(#a-violet)"/>
+  <text x="768" y="405" class="label">A2A</text>
+  <line x1="920" y1="545" x2="988" y2="575" stroke="#c3a6e8" stroke-width="2.5" marker-end="url(#a-soft)"/>
+  <text x="950" y="549" class="label" text-anchor="middle">MCP</text>
+
+  <!-- traces -->
+  <rect x="590" y="604" width="330" height="46" rx="10" fill="#26131f" stroke="#c3a6e8" stroke-width="1.5"/>
+  <text x="606" y="623" class="line" font-weight="700">Tempo: a trace of every step (no content)</text>
+  <text x="606" y="641" class="small">shown in Grafana: grafana.example.com · Wattson Agent</text>
+
+  <text x="544" y="668" class="small">No Kubernetes credentials in the agents · network rules: orchestrator → triage, knowledge; triage → KubeAI; agents → Tempo</text>
+
+  <!-- port-forward link -->
+  <line x1="420" y1="318" x2="588" y2="318" stroke="#a742ff" stroke-width="3" marker-end="url(#a-violet)" marker-start="url(#a-violet)"/>
+  <rect x="452" y="286" width="104" height="20" rx="4" fill="#1a1a1d"/>
+  <rect x="452" y="328" width="104" height="38" rx="4" fill="#1a1a1d"/>
+  <text x="504" y="300" class="label" text-anchor="middle">port-forward</text>
+  <text x="504" y="342" class="label" text-anchor="middle">+ token · A2A</text>
+  <text x="504" y="360" class="small" text-anchor="middle">no public address</text>
+
+  <!-- ================= steps ================= -->
+  <text x="40" y="722" class="panel">ONE TASK, STEP BY STEP</text>
+
+  <g transform="translate(30,740)">
+    <!-- each card 140 wide, 10 gap -->
+    <g>
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#f5cd45"/><text x="22" y="28" class="step-n" text-anchor="middle">1</text>
+      <text x="42" y="29" class="step-t">You ask</text>
+      <text x="14" y="62" class="step-l">wattson ask "…"</text>
+      <text x="14" y="80" class="step-l">inside a repo</text>
+    </g>
+    <g transform="translate(150,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#c3a6e8"/><text x="22" y="28" class="step-n" text-anchor="middle">2</text>
+      <text x="42" y="29" class="step-t">Triage</text>
+      <text x="14" y="62" class="step-l">Granite sorts it:</text>
+      <text x="14" y="80" class="step-l">devops, code or</text>
+      <text x="14" y="98" class="step-l">prompt; how sure</text>
+    </g>
+    <g transform="translate(300,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#c3a6e8"/><text x="22" y="28" class="step-n" text-anchor="middle">3</text>
+      <text x="42" y="29" class="step-t">Grimoire</text>
+      <text x="14" y="62" class="step-l">finds the runbooks</text>
+      <text x="14" y="80" class="step-l">that fit (read-only)</text>
+    </g>
+    <g transform="translate(450,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#f5cd45"/><text x="22" y="28" class="step-n" text-anchor="middle">4</text>
+      <text x="42" y="29" class="step-t">Questions</text>
+      <text x="14" y="62" class="step-l">which cluster?</text>
+      <text x="14" y="80" class="step-l">which namespace?</text>
+      <text x="14" y="98" class="step-l">you answer</text>
+    </g>
+    <g transform="translate(600,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#f5cd45"/><text x="22" y="28" class="step-n" text-anchor="middle">5</text>
+      <text x="42" y="29" class="step-t">Evidence</text>
+      <text x="14" y="62" class="step-l">read-only git and</text>
+      <text x="14" y="80" class="step-l">kubectl on your</text>
+      <text x="14" y="98" class="step-l">laptop, if you allow</text>
+    </g>
+    <g transform="translate(750,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#c3a6e8"/><text x="22" y="28" class="step-n" text-anchor="middle">6</text>
+      <text x="42" y="29" class="step-t">Prompt</text>
+      <text x="14" y="62" class="step-l">a fixed template:</text>
+      <text x="14" y="80" class="step-l">goal, facts, rules,</text>
+      <text x="14" y="98" class="step-l">secrets removed</text>
+    </g>
+    <g transform="translate(900,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#f5cd45"/><text x="22" y="28" class="step-n" text-anchor="middle">7</text>
+      <text x="42" y="29" class="step-t">Review</text>
+      <text x="14" y="62" class="step-l">read it, edit it,</text>
+      <text x="14" y="80" class="step-l">then type yes</text>
+      <text x="14" y="98" class="step-l">(or reject)</text>
+    </g>
+    <g transform="translate(1050,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#f5cd45"/><text x="22" y="28" class="step-n" text-anchor="middle">8</text>
+      <text x="42" y="29" class="step-t">Claude Code</text>
+      <text x="14" y="62" class="step-l">works in your repo,</text>
+      <text x="14" y="80" class="step-l">asks its own</text>
+      <text x="14" y="98" class="step-l">permissions</text>
+    </g>
+    <g transform="translate(1200,0)">
+      <rect x="0" y="0" width="140" height="128" rx="12" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+      <circle cx="22" cy="24" r="12" fill="#c3a6e8"/><text x="22" y="28" class="step-n" text-anchor="middle">9</text>
+      <text x="42" y="29" class="step-t">Result</text>
+      <text x="14" y="62" class="step-l">reported and kept</text>
+      <text x="14" y="80" class="step-l">as a record (no</text>
+      <text x="14" y="98" class="step-l">prompt text)</text>
+    </g>
+    <!-- arrows between cards -->
+    <g stroke="#6a1e55" stroke-width="2">
+      <line x1="140" y1="64" x2="150" y2="64"/><line x1="290" y1="64" x2="300" y2="64"/>
+      <line x1="440" y1="64" x2="450" y2="64"/><line x1="590" y1="64" x2="600" y2="64"/>
+      <line x1="740" y1="64" x2="750" y2="64"/><line x1="890" y1="64" x2="900" y2="64"/>
+      <line x1="1040" y1="64" x2="1050" y2="64"/><line x1="1190" y1="64" x2="1200" y2="64"/>
+    </g>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(40,902)">
+    <rect x="0" y="0" width="22" height="16" rx="4" fill="#3b1c32" stroke="#f5cd45" stroke-width="2"/>
+    <text x="32" y="13" class="line">gold: you decide here (the agent waits: A2A "input-required")</text>
+    <rect x="520" y="0" width="22" height="16" rx="4" fill="#3b1c32" stroke="#a742ff" stroke-width="2"/>
+    <text x="552" y="13" class="line">violet: an agent's step, or an A2A call between agents</text>
+    <rect x="1000" y="0" width="22" height="16" rx="4" fill="none" stroke="#c3a6e8" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="1032" y="13" class="line">dashed border: outside Wattson (Grimoire)</text>
+  </g>
+  <text x="40" y="958" class="sub">The numbers in the boxes above are the steps. No model runs on your laptop. Nothing changes your clusters.</text>
+</svg>

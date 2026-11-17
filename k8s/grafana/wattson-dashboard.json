@@ -1,0 +1,1524 @@
+{
+  "uid": "wattson",
+  "title": "Wattson Agent",
+  "tags": [
+    "wattson",
+    "traces"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "description": "The tasks of Wattson Agent, from their traces in Tempo (data source wattson-tempo). Made by k8s/grafana.sh; run it again to update.",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "",
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "panels": [
+    {
+      "type": "bargauge",
+      "title": "Tasks in this time range, by outcome",
+      "description": "How the tasks of the chosen time range ended: completed; rejected (you said no); failed; interrupted (you left it); expired (nobody answered in time); blocked (stopped by the Guard, or by you at its question: nothing ran). From the span wattson.task.end.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\"} | count_over_time() by (span.wattson.outcome)",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{span\\.wattson\\.outcome=\"(.*)\"\\}$",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0,
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rejected"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "interrupted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "expired"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "blocked"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "dark-red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "namePlacement": "left",
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 300,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 15
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 1
+    },
+    {
+      "type": "timeseries",
+      "title": "Tasks per 15 minutes, by outcome",
+      "description": "How many tasks ended in each 15 minutes, and how. Tempo shows a time slot once it is over, so the last 15 minutes appear a little later (the totals on the left include them).",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\"} | count_over_time() by (span.wattson.outcome)",
+          "metricsQueryType": "range",
+          "step": "15m"
+        }
+      ],
+      "transformations": [],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 0,
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rejected"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "interrupted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "expired"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "blocked"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "dark-red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 2
+    },
+    {
+      "type": "piechart",
+      "title": "Who decided the kind of task",
+      "description": "How triage decided what kind of task a request is: the small model (sure enough), the keyword rules (the model was not sure, or down), or you (you chose it yourself).",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\"} | count_over_time() by (span.wattson.triage.method)",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{span\\.wattson\\.triage\\.method=\"(.*)\"\\}$",
+            "renamePattern": "$1"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^model$",
+            "renamePattern": "the model"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^rules$",
+            "renamePattern": "keyword rules"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^override$",
+            "renamePattern": "you"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "the model",
+                  "you",
+                  "keyword rules"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": [
+          "percent"
+        ],
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value"
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "id": 3
+    },
+    {
+      "type": "bargauge",
+      "title": "Triage confidence: average and lowest",
+      "description": "The confidence of triage in its answer, by who decided: the model's own probability, as a whole percent (span.wattson.triage.confidence_pct). Below the setting MIN_CONFIDENCE (60 %) the keyword rules decide. Average and lowest, not p50/p95: Tempo computes quantiles from power-of-two buckets, and every value from 65 % to 100 % falls into one of them, so a p95 would read up to 128 %.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 4,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\"} | avg_over_time(span.wattson.triage.confidence_pct) by (span.wattson.triage.method)",
+          "metricsQueryType": "instant"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\"} | min_over_time(span.wattson.triage.confidence_pct) by (span.wattson.triage.method, name)",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{name=\"wattson\\.task\\.end\", span\\.wattson\\.triage\\.method=\"(.*)\"\\}$",
+            "renamePattern": "$1 lowest"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{span\\.wattson\\.triage\\.method=\"(.*)\"\\}$",
+            "renamePattern": "$1 average"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^([^{} ]+)$",
+            "renamePattern": "$1 average"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^model (average|lowest)$",
+            "renamePattern": "the model $1"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^rules (average|lowest)$",
+            "renamePattern": "keyword rules $1"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^override (average|lowest)$",
+            "renamePattern": "you $1"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0,
+          "min": 0,
+          "max": 100
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* lowest$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "namePlacement": "top",
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 300,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 15
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 4
+    },
+    {
+      "type": "bargauge",
+      "title": "How long the model takes (p50 and p95)",
+      "description": "The time of each call to the small model in the triage pod: classify (the kind of task and how sure) and hints (names and search words). Half of the calls took less than p50, 95 in 100 less than p95.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 8,
+        "w": 4,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.model.classify\" || name=\"wattson.model.hints\"} | quantile_over_time(duration, .5, .95) by (name)",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{name=\"wattson\\.model\\.(.*)\", p=0\\.5\\}$",
+            "renamePattern": "$1 p50"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{name=\"wattson\\.model\\.(.*)\", p=0\\.95\\}$",
+            "renamePattern": "$1 p95"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{p=0\\.5, name=\"(.*)\"\\}$",
+            "renamePattern": "$1 p50"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{p=0\\.95, name=\"(.*)\"\\}$",
+            "renamePattern": "$1 p95"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* p95$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "namePlacement": "left",
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 300,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 15
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 7
+    },
+    {
+      "type": "bargauge",
+      "title": "Grimoire calls in this time range: ok and failed",
+      "description": "The calls of the knowledge agent to Grimoire (its MCP tools, read-only), by tool: how many worked, and how many failed (red).",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 8,
+        "w": 4,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.grimoire.call\"} | count_over_time() by (span.wattson.grimoire.tool, span.wattson.grimoire.ok)",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{span\\.wattson\\.grimoire\\.ok=true, span\\.wattson\\.grimoire\\.tool=\"(.*)\"\\}$",
+            "renamePattern": "$1 ok"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{span\\.wattson\\.grimoire\\.ok=false, span\\.wattson\\.grimoire\\.tool=\"(.*)\"\\}$",
+            "renamePattern": "$1 failed"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0,
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* failed$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* ok$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "namePlacement": "left",
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 300,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 15
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 8
+    },
+    {
+      "type": "bargauge",
+      "title": "Time waiting for you, by question (p50 and p95)",
+      "description": "How long a task waited for your answer, by question (span.wattson.interrupt), from span.wattson.wait_ms (whole milliseconds): half of the waits were shorter than p50, 95 in 100 shorter than p95. Tempo computes these from power-of-two buckets: close, not exact.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.step\" && span.wattson.wait_ms != nil} | quantile_over_time(span.wattson.wait_ms, .5, .95) by (span.wattson.interrupt)",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{p=0\\.5, span\\.wattson\\.interrupt=\"(.*)\"\\}$",
+            "renamePattern": "$1 p50"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\\{p=0\\.95, span\\.wattson\\.interrupt=\"(.*)\"\\}$",
+            "renamePattern": "$1 p95"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* p95$"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "namePlacement": "left",
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 300,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 15
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 6
+    },
+    {
+      "type": "timeseries",
+      "title": "Guard decisions, by label",
+      "description": "How the Guard judged each request, per 15 minutes: work (a normal engineering task), out_of_scope (not engineering work), risky (it asks to change or delete something), malicious (it looks like an attack or abuse). In monitor mode the Guard only records this and blocks nothing: the bars show what enforce mode would do. From the span wattson.guard.request.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.guard.request\"} | count_over_time() by (span.wattson.guard.label)",
+          "metricsQueryType": "range",
+          "step": "15m"
+        }
+      ],
+      "transformations": [],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 0,
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "work"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "out_of_scope"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "risky"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "malicious"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10
+    },
+    {
+      "type": "bargauge",
+      "title": "Blocked and confirmed tasks",
+      "description": "Blocked: tasks that ended blocked, so nothing ran: the Guard stopped them (malicious or not work, in enforce mode), or you said no when it asked about a risky request. Asked to confirm: risky requests where the Guard asked you \"Go on with a read-only investigation?\" (yes or no). In monitor mode both stay at 0. In the chosen time range.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\" && span.wattson.outcome=\"blocked\"} | count_over_time()",
+          "metricsQueryType": "instant"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.step\" && span.wattson.interrupt=\"guard_confirm\"} | count_over_time()",
+          "metricsQueryType": "instant"
+        }
+      ],
+      "transformations": [],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0,
+          "min": 0,
+          "noValue": "0"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Blocked (nothing ran)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "dark-red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Asked to confirm (risky)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "text",
+        "showUnfilled": true,
+        "namePlacement": "left",
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "maxVizHeight": 300,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 15
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Evidence parts removed (possible prompt injection)",
+      "description": "How many parts of the evidence (kubectl and git output) and of the Grimoire documents the Guard cut out, per 15 minutes, because they looked like orders to the agent (prompt injection). They never reach the prompt; the review shows how many were removed. From the span wattson.guard.evidence.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 20,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.guard.evidence\"} | sum_over_time(span.wattson.guard.evidence_removed)",
+          "metricsQueryType": "range",
+          "step": "15m"
+        }
+      ],
+      "transformations": [],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 0,
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Injection model: parts flagged",
+      "description": "How many parts the small injection model (the pod wattson-shield) flagged as orders to the agent, per 15 minutes: evidence items (one command's output) and Grimoire document sections, after the rules of the Guard. With INJECTION_MODE=cut (since 27 Oct 2026) they are removed before the prompt and the review names them; with warn they stay in the prompt. \"Requests flagged\": your own request, read by the same model after the Guard's verdict (text pasted from a ticket, a log or a chat); in enforce mode the Guard asks you first. \"Did not answer\" counts the evidence checks where the shield was down or slow: the rules alone checked then. From the spans wattson.guard.evidence and wattson.guard.request.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.guard.evidence\"} | sum_over_time(span.wattson.guard.injection_flagged)",
+          "metricsQueryType": "range",
+          "step": "15m"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.guard.evidence\" && span.wattson.guard.injection_ok=false} | count_over_time()",
+          "metricsQueryType": "range",
+          "step": "15m"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.guard.request\"} | sum_over_time(span.wattson.guard.injection_flagged)",
+          "metricsQueryType": "range",
+          "step": "15m"
+        }
+      ],
+      "transformations": [],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 0,
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Flagged parts (evidence, documents)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Did not answer (rules only)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Requests flagged (orders in your request)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13
+    },
+    {
+      "type": "table",
+      "title": "Recent tasks",
+      "description": "The last 50 tasks of the time range (the span wattson.task.end): when it ended, its task id, workflow, how it ended and how long it took. Click the value in \"Open the trace\" to see the whole task: every step, the model calls and the Grimoire calls.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "wattson-tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "wattson-tempo"
+          },
+          "queryType": "traceql",
+          "query": "{name=\"wattson.task.end\"} | select(span.wattson.task_id, span.wattson.workflow, span.wattson.outcome, span.wattson.task_duration_s)",
+          "limit": 50,
+          "spss": 1,
+          "tableType": "spans"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "Name": true,
+              "Duration": true
+            },
+            "indexByName": {
+              "Start time": 0,
+              "wattson.task_id": 1,
+              "wattson.workflow": 2,
+              "wattson.outcome": 3,
+              "wattson.task_duration_s": 4,
+              "Span ID": 5
+            },
+            "renameByName": {
+              "Start time": "Ended",
+              "wattson.task_id": "Task",
+              "wattson.workflow": "Workflow",
+              "wattson.outcome": "Outcome",
+              "wattson.task_duration_s": "Took",
+              "Span ID": "Open the trace"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Took"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "traceIdHidden"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Ended",
+            "desc": true
+          }
+        ]
+      },
+      "id": 9
+    }
+  ]
+}

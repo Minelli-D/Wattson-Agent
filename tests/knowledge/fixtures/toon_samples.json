@@ -1,0 +1,1356 @@
+[
+ {
+  "name": "get_context (preview)",
+  "toon": "[12]{key,title,tags,type,danger,overlap}:\n  k8s/rotate-the-postgres-password-without-downtime.md,Rotate the Postgres password without downtime,prometheus spf k8s,note,false,2\n  infra/backup/kubectl-drain-a-node-safely-then-uncordon-it.md,\"kubectl: drain a node safely, then uncordon it\",oauth alertmanager terraform infra backup,manifest,false,3\n  linux/shell/cert-manager-let-s-encrypt-renew-a-stuck-certificate.md,\"cert-manager & Let's Encrypt: renew a stuck certificate\",ubuntu git registry wireguard linux shell,note,false,1\n  dev/python/docker-build-cannot-reach-registry-npmjs-org-behind-the-vpn.md,Docker build cannot reach registry.npmjs.org behind the VPN,benchmark dev python,snippet,true,3\n  notes/a-systemd-timer-instead-of-cron.md,A systemd timer instead of cron,nginx vault notes,manifest,false,3\n  laptop/vpn/git-undo-the-last-commit-keep-the-changes.md,\"Git: undo the last commit, keep the changes\",webhook secrets pdf dkim laptop vpn,manifest,false,1\n  k8s/storage/restore-one-table-from-a-pg-dump.md,Restore one table from a pg_dump,hetzner python k8s storage,reference,false,2\n  db/redis/ingress-returns-413-request-entity-too-large.md,\"Ingress returns 413 \\\"Request Entity Too Large\\\"\",compose backup gitlab-ci db redis,reference,false,3\n  security/ssh/why-the-app-container-was-oom-killed-at-100-mb.md,Why the app container was OOM-killed at 100 MB,serviceaccount redis memory security ssh,reference,false,2\n  dev/docker/helm-upgrade-fails-with-another-operation-is-in-progress.md,\"Helm upgrade fails with \\\"another operation is in progress\\\"\",networkpolicy dev docker,snippet,false,3\n  cloud/hetzner/wireguard-on-ubuntu-split-tunnel-for-the-office-network.md,\"WireGuard on Ubuntu: split tunnel for the office network\",loki cloud hetzner,runbook,false,3\n  projects/radar/terraform-state-lock-force-unlock-carefully.md,\"Terraform state lock: force-unlock, carefully\",imap ansible gladia projects radar,runbook,false,2",
+  "expected": [
+   {
+    "key": "k8s/rotate-the-postgres-password-without-downtime.md",
+    "title": "Rotate the Postgres password without downtime",
+    "tags": "prometheus spf k8s",
+    "type": "note",
+    "danger": false,
+    "overlap": 2
+   },
+   {
+    "key": "infra/backup/kubectl-drain-a-node-safely-then-uncordon-it.md",
+    "title": "kubectl: drain a node safely, then uncordon it",
+    "tags": "oauth alertmanager terraform infra backup",
+    "type": "manifest",
+    "danger": false,
+    "overlap": 3
+   },
+   {
+    "key": "linux/shell/cert-manager-let-s-encrypt-renew-a-stuck-certificate.md",
+    "title": "cert-manager & Let's Encrypt: renew a stuck certificate",
+    "tags": "ubuntu git registry wireguard linux shell",
+    "type": "note",
+    "danger": false,
+    "overlap": 1
+   },
+   {
+    "key": "dev/python/docker-build-cannot-reach-registry-npmjs-org-behind-the-vpn.md",
+    "title": "Docker build cannot reach registry.npmjs.org behind the VPN",
+    "tags": "benchmark dev python",
+    "type": "snippet",
+    "danger": true,
+    "overlap": 3
+   },
+   {
+    "key": "notes/a-systemd-timer-instead-of-cron.md",
+    "title": "A systemd timer instead of cron",
+    "tags": "nginx vault notes",
+    "type": "manifest",
+    "danger": false,
+    "overlap": 3
+   },
+   {
+    "key": "laptop/vpn/git-undo-the-last-commit-keep-the-changes.md",
+    "title": "Git: undo the last commit, keep the changes",
+    "tags": "webhook secrets pdf dkim laptop vpn",
+    "type": "manifest",
+    "danger": false,
+    "overlap": 1
+   },
+   {
+    "key": "k8s/storage/restore-one-table-from-a-pg-dump.md",
+    "title": "Restore one table from a pg_dump",
+    "tags": "hetzner python k8s storage",
+    "type": "reference",
+    "danger": false,
+    "overlap": 2
+   },
+   {
+    "key": "db/redis/ingress-returns-413-request-entity-too-large.md",
+    "title": "Ingress returns 413 \"Request Entity Too Large\"",
+    "tags": "compose backup gitlab-ci db redis",
+    "type": "reference",
+    "danger": false,
+    "overlap": 3
+   },
+   {
+    "key": "security/ssh/why-the-app-container-was-oom-killed-at-100-mb.md",
+    "title": "Why the app container was OOM-killed at 100 MB",
+    "tags": "serviceaccount redis memory security ssh",
+    "type": "reference",
+    "danger": false,
+    "overlap": 2
+   },
+   {
+    "key": "dev/docker/helm-upgrade-fails-with-another-operation-is-in-progress.md",
+    "title": "Helm upgrade fails with \"another operation is in progress\"",
+    "tags": "networkpolicy dev docker",
+    "type": "snippet",
+    "danger": false,
+    "overlap": 3
+   },
+   {
+    "key": "cloud/hetzner/wireguard-on-ubuntu-split-tunnel-for-the-office-network.md",
+    "title": "WireGuard on Ubuntu: split tunnel for the office network",
+    "tags": "loki cloud hetzner",
+    "type": "runbook",
+    "danger": false,
+    "overlap": 3
+   },
+   {
+    "key": "projects/radar/terraform-state-lock-force-unlock-carefully.md",
+    "title": "Terraform state lock: force-unlock, carefully",
+    "tags": "imap ansible gladia projects radar",
+    "type": "runbook",
+    "danger": false,
+    "overlap": 2
+   }
+  ],
+  "json": "[\n  {\n    \"key\": \"k8s/rotate-the-postgres-password-without-downtime.md\",\n    \"title\": \"Rotate the Postgres password without downtime\",\n    \"folder\": \"k8s\",\n    \"tags\": [\n      \"prometheus\",\n      \"spf\",\n      \"k8s\"\n    ],\n    \"type\": \"note\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 2\n  },\n  {\n    \"key\": \"infra/backup/kubectl-drain-a-node-safely-then-uncordon-it.md\",\n    \"title\": \"kubectl: drain a node safely, then uncordon it\",\n    \"folder\": \"infra/backup\",\n    \"tags\": [\n      \"oauth\",\n      \"alertmanager\",\n      \"terraform\",\n      \"infra\",\n      \"backup\"\n    ],\n    \"type\": \"manifest\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"linux/shell/cert-manager-let-s-encrypt-renew-a-stuck-certificate.md\",\n    \"title\": \"cert-manager & Let's Encrypt: renew a stuck certificate\",\n    \"folder\": \"linux/shell\",\n    \"tags\": [\n      \"ubuntu\",\n      \"git\",\n      \"registry\",\n      \"wireguard\",\n      \"linux\",\n      \"shell\"\n    ],\n    \"type\": \"note\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 1\n  },\n  {\n    \"key\": \"dev/python/docker-build-cannot-reach-registry-npmjs-org-behind-the-vpn.md\",\n    \"title\": \"Docker build cannot reach registry.npmjs.org behind the VPN\",\n    \"folder\": \"dev/python\",\n    \"tags\": [\n      \"benchmark\",\n      \"dev\",\n      \"python\"\n    ],\n    \"type\": \"snippet\",\n    \"env\": null,\n    \"danger\": true,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"notes/a-systemd-timer-instead-of-cron.md\",\n    \"title\": \"A systemd timer instead of cron\",\n    \"folder\": \"notes\",\n    \"tags\": [\n      \"nginx\",\n      \"vault\",\n      \"notes\"\n    ],\n    \"type\": \"manifest\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"laptop/vpn/git-undo-the-last-commit-keep-the-changes.md\",\n    \"title\": \"Git: undo the last commit, keep the changes\",\n    \"folder\": \"laptop/vpn\",\n    \"tags\": [\n      \"webhook\",\n      \"secrets\",\n      \"pdf\",\n      \"dkim\",\n      \"laptop\",\n      \"vpn\"\n    ],\n    \"type\": \"manifest\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 1\n  },\n  {\n    \"key\": \"k8s/storage/restore-one-table-from-a-pg-dump.md\",\n    \"title\": \"Restore one table from a pg_dump\",\n    \"folder\": \"k8s/storage\",\n    \"tags\": [\n      \"hetzner\",\n      \"python\",\n      \"k8s\",\n      \"storage\"\n    ],\n    \"type\": \"reference\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 2\n  },\n  {\n    \"key\": \"db/redis/ingress-returns-413-request-entity-too-large.md\",\n    \"title\": \"Ingress returns 413 \\\"Request Entity Too Large\\\"\",\n    \"folder\": \"db/redis\",\n    \"tags\": [\n      \"compose\",\n      \"backup\",\n      \"gitlab-ci\",\n      \"db\",\n      \"redis\"\n    ],\n    \"type\": \"reference\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"security/ssh/why-the-app-container-was-oom-killed-at-100-mb.md\",\n    \"title\": \"Why the app container was OOM-killed at 100 MB\",\n    \"folder\": \"security/ssh\",\n    \"tags\": [\n      \"serviceaccount\",\n      \"redis\",\n      \"memory\",\n      \"security\",\n      \"ssh\"\n    ],\n    \"type\": \"reference\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 2\n  },\n  {\n    \"key\": \"dev/docker/helm-upgrade-fails-with-another-operation-is-in-progress.md\",\n    \"title\": \"Helm upgrade fails with \\\"another operation is in progress\\\"\",\n    \"folder\": \"dev/docker\",\n    \"tags\": [\n      \"networkpolicy\",\n      \"dev\",\n      \"docker\"\n    ],\n    \"type\": \"snippet\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"cloud/hetzner/wireguard-on-ubuntu-split-tunnel-for-the-office-network.md\",\n    \"title\": \"WireGuard on Ubuntu: split tunnel for the office network\",\n    \"folder\": \"cloud/hetzner\",\n    \"tags\": [\n      \"loki\",\n      \"cloud\",\n      \"hetzner\"\n    ],\n    \"type\": \"runbook\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"projects/radar/terraform-state-lock-force-unlock-carefully.md\",\n    \"title\": \"Terraform state lock: force-unlock, carefully\",\n    \"folder\": \"projects/radar\",\n    \"tags\": [\n      \"imap\",\n      \"ansible\",\n      \"gladia\",\n      \"projects\",\n      \"radar\"\n    ],\n    \"type\": \"runbook\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 2\n  }\n]"
+ },
+ {
+  "name": "search_documents",
+  "toon": "[10]{key,title,tags,status,snippet}:\n  laptop/vpn/git-undo-the-last-commit-keep-the-changes.md,\"Git: undo the last commit, keep the changes\",dkim csr gnome systemd laptop vpn,active,run kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data then check that pods & volumes moved\n  k8s/storage/restore-one-table-from-a-pg-dump.md,Restore one table from a pg_dump,journald gladia networkpolicy ingress k8s storage,active,\"the backup runs at 02:00 <UTC>; restic forget --keep-daily 7 --prune verify with restic check\"\n  db/redis/ingress-returns-413-request-entity-too-large.md,\"Ingress returns 413 \\\"Request Entity Too Large\\\"\",mtls coredns smtp node db redis,active,pg_dump -Fc -t public.documents grimoire > documents.dump pg_restore --data-only -t documents\n  security/ssh/why-the-app-container-was-oom-killed-at-100-mb.md,Why the app container was OOM-killed at 100 MB,dkim imap prompting invoice security ssh,active,\"nginx.ingress.kubernetes.io/proxy-body-size: \\\"64m\\\" # the same as APP_MAX_BODY_MB\"\n  dev/docker/helm-upgrade-fails-with-another-operation-is-in-progress.md,\"Helm upgrade fails with \\\"another operation is in progress\\\"\",rebase mtls calico node dev docker,active,\"set tls secret name in the Ingress, cert-manager makes it; kubectl describe certificate && kubectl get challenges\"\n  cloud/hetzner/wireguard-on-ubuntu-split-tunnel-for-the-office-network.md,\"WireGuard on Ubuntu: split tunnel for the office network\",secrets cloud hetzner,active,\"export DATABASE_URL=postgres://grimoire@127.0.0.1:5432/grimoire pnpm db:migrate\"\n  projects/radar/terraform-state-lock-force-unlock-carefully.md,\"Terraform state lock: force-unlock, carefully\",json projects radar,draft,\"the token is checked with the public keys (ES256), never a shared secret; iss, exp, email\"\n  k8s/upgrades/prometheus-alert-for-a-full-pvc-90.md,Prometheus alert for a full PVC (90%),obsidian ingress k8s upgrades,active,\"[Unit] Description=nightly backup [Timer] OnCalendar=*-*-* 02:00:00\"\n  ci/github/oauth-2-1-with-pkce-step-by-step.md,\"OAuth 2.1 with PKCE, step by step\",bash ci github,active,\"if the search finds nothing, the OR retry runs; words are ANDed otherwise\"\n  observability/prometheus/networkpolicy-only-the-ingress-namespace-may-reach-the-pod.md,\"NetworkPolicy: only the ingress namespace may reach the pod\",firefox incident retrieval secrets observability prometheus,active,\"docker build --network host -t app:dev . # when the build cannot find the <registry>\"",
+  "expected": [
+   {
+    "key": "laptop/vpn/git-undo-the-last-commit-keep-the-changes.md",
+    "title": "Git: undo the last commit, keep the changes",
+    "tags": "dkim csr gnome systemd laptop vpn",
+    "status": "active",
+    "snippet": "run kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data then check that pods & volumes moved"
+   },
+   {
+    "key": "k8s/storage/restore-one-table-from-a-pg-dump.md",
+    "title": "Restore one table from a pg_dump",
+    "tags": "journald gladia networkpolicy ingress k8s storage",
+    "status": "active",
+    "snippet": "the backup runs at 02:00 <UTC>; restic forget --keep-daily 7 --prune verify with restic check"
+   },
+   {
+    "key": "db/redis/ingress-returns-413-request-entity-too-large.md",
+    "title": "Ingress returns 413 \"Request Entity Too Large\"",
+    "tags": "mtls coredns smtp node db redis",
+    "status": "active",
+    "snippet": "pg_dump -Fc -t public.documents grimoire > documents.dump pg_restore --data-only -t documents"
+   },
+   {
+    "key": "security/ssh/why-the-app-container-was-oom-killed-at-100-mb.md",
+    "title": "Why the app container was OOM-killed at 100 MB",
+    "tags": "dkim imap prompting invoice security ssh",
+    "status": "active",
+    "snippet": "nginx.ingress.kubernetes.io/proxy-body-size: \"64m\" # the same as APP_MAX_BODY_MB"
+   },
+   {
+    "key": "dev/docker/helm-upgrade-fails-with-another-operation-is-in-progress.md",
+    "title": "Helm upgrade fails with \"another operation is in progress\"",
+    "tags": "rebase mtls calico node dev docker",
+    "status": "active",
+    "snippet": "set tls secret name in the Ingress, cert-manager makes it; kubectl describe certificate && kubectl get challenges"
+   },
+   {
+    "key": "cloud/hetzner/wireguard-on-ubuntu-split-tunnel-for-the-office-network.md",
+    "title": "WireGuard on Ubuntu: split tunnel for the office network",
+    "tags": "secrets cloud hetzner",
+    "status": "active",
+    "snippet": "export DATABASE_URL=postgres://grimoire@127.0.0.1:5432/grimoire pnpm db:migrate"
+   },
+   {
+    "key": "projects/radar/terraform-state-lock-force-unlock-carefully.md",
+    "title": "Terraform state lock: force-unlock, carefully",
+    "tags": "json projects radar",
+    "status": "draft",
+    "snippet": "the token is checked with the public keys (ES256), never a shared secret; iss, exp, email"
+   },
+   {
+    "key": "k8s/upgrades/prometheus-alert-for-a-full-pvc-90.md",
+    "title": "Prometheus alert for a full PVC (90%)",
+    "tags": "obsidian ingress k8s upgrades",
+    "status": "active",
+    "snippet": "[Unit] Description=nightly backup [Timer] OnCalendar=*-*-* 02:00:00"
+   },
+   {
+    "key": "ci/github/oauth-2-1-with-pkce-step-by-step.md",
+    "title": "OAuth 2.1 with PKCE, step by step",
+    "tags": "bash ci github",
+    "status": "active",
+    "snippet": "if the search finds nothing, the OR retry runs; words are ANDed otherwise"
+   },
+   {
+    "key": "observability/prometheus/networkpolicy-only-the-ingress-namespace-may-reach-the-pod.md",
+    "title": "NetworkPolicy: only the ingress namespace may reach the pod",
+    "tags": "firefox incident retrieval secrets observability prometheus",
+    "status": "active",
+    "snippet": "docker build --network host -t app:dev . # when the build cannot find the <registry>"
+   }
+  ],
+  "json": "[\n  {\n    \"key\": \"laptop/vpn/git-undo-the-last-commit-keep-the-changes.md\",\n    \"title\": \"Git: undo the last commit, keep the changes\",\n    \"folder\": \"laptop/vpn\",\n    \"tags\": [\n      \"dkim\",\n      \"csr\",\n      \"gnome\",\n      \"systemd\",\n      \"laptop\",\n      \"vpn\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"run <mark>kubectl</mark> drain node-1 --ignore-daemonsets --delete-emptydir-data\\nthen check that pods &amp; volumes moved\"\n  },\n  {\n    \"key\": \"k8s/storage/restore-one-table-from-a-pg-dump.md\",\n    \"title\": \"Restore one table from a pg_dump\",\n    \"folder\": \"k8s/storage\",\n    \"tags\": [\n      \"journald\",\n      \"gladia\",\n      \"networkpolicy\",\n      \"ingress\",\n      \"k8s\",\n      \"storage\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"the <mark>backup</mark> runs at 02:00 &lt;UTC&gt;; restic forget --keep-daily 7 --prune\\n\\nverify with restic check\"\n  },\n  {\n    \"key\": \"db/redis/ingress-returns-413-request-entity-too-large.md\",\n    \"title\": \"Ingress returns 413 \\\"Request Entity Too Large\\\"\",\n    \"folder\": \"db/redis\",\n    \"tags\": [\n      \"mtls\",\n      \"coredns\",\n      \"smtp\",\n      \"node\",\n      \"db\",\n      \"redis\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"pg_dump -Fc -t public.documents grimoire &gt; documents.dump\\n  pg_restore --data-only -t documents\"\n  },\n  {\n    \"key\": \"security/ssh/why-the-app-container-was-oom-killed-at-100-mb.md\",\n    \"title\": \"Why the app container was OOM-killed at 100 MB\",\n    \"folder\": \"security/ssh\",\n    \"tags\": [\n      \"dkim\",\n      \"imap\",\n      \"prompting\",\n      \"invoice\",\n      \"security\",\n      \"ssh\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"nginx.ingress.kubernetes.io/proxy-body-size: \\\"64m\\\"   # the same as APP_MAX_BODY_MB\"\n  },\n  {\n    \"key\": \"dev/docker/helm-upgrade-fails-with-another-operation-is-in-progress.md\",\n    \"title\": \"Helm upgrade fails with \\\"another operation is in progress\\\"\",\n    \"folder\": \"dev/docker\",\n    \"tags\": [\n      \"rebase\",\n      \"mtls\",\n      \"calico\",\n      \"node\",\n      \"dev\",\n      \"docker\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"set <mark>tls</mark> secret name in the Ingress, cert-manager makes it; kubectl describe certificate &amp;&amp; kubectl get challenges\"\n  },\n  {\n    \"key\": \"cloud/hetzner/wireguard-on-ubuntu-split-tunnel-for-the-office-network.md\",\n    \"title\": \"WireGuard on Ubuntu: split tunnel for the office network\",\n    \"folder\": \"cloud/hetzner\",\n    \"tags\": [\n      \"secrets\",\n      \"cloud\",\n      \"hetzner\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"export DATABASE_URL=postgres://grimoire@127.0.0.1:5432/grimoire\\npnpm db:migrate\"\n  },\n  {\n    \"key\": \"projects/radar/terraform-state-lock-force-unlock-carefully.md\",\n    \"title\": \"Terraform state lock: force-unlock, carefully\",\n    \"folder\": \"projects/radar\",\n    \"tags\": [\n      \"json\",\n      \"projects\",\n      \"radar\"\n    ],\n    \"status\": \"draft\",\n    \"summary\": null,\n    \"snippet\": \"the <mark>token</mark> is checked with the public keys (ES256), never a shared secret; iss, exp, email\"\n  },\n  {\n    \"key\": \"k8s/upgrades/prometheus-alert-for-a-full-pvc-90.md\",\n    \"title\": \"Prometheus alert for a full PVC (90%)\",\n    \"folder\": \"k8s/upgrades\",\n    \"tags\": [\n      \"obsidian\",\n      \"ingress\",\n      \"k8s\",\n      \"upgrades\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"[Unit]\\nDescription=nightly <mark>backup</mark>\\n[Timer]\\nOnCalendar=*-*-* 02:00:00\"\n  },\n  {\n    \"key\": \"ci/github/oauth-2-1-with-pkce-step-by-step.md\",\n    \"title\": \"OAuth 2.1 with PKCE, step by step\",\n    \"folder\": \"ci/github\",\n    \"tags\": [\n      \"bash\",\n      \"ci\",\n      \"github\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"if the <mark>search</mark> finds nothing, the OR retry runs; words  are  ANDed  otherwise\"\n  },\n  {\n    \"key\": \"observability/prometheus/networkpolicy-only-the-ingress-namespace-may-reach-the-pod.md\",\n    \"title\": \"NetworkPolicy: only the ingress namespace may reach the pod\",\n    \"folder\": \"observability/prometheus\",\n    \"tags\": [\n      \"firefox\",\n      \"incident\",\n      \"retrieval\",\n      \"secrets\",\n      \"observability\",\n      \"prometheus\"\n    ],\n    \"status\": \"active\",\n    \"summary\": null,\n    \"snippet\": \"docker build --network host -t app:dev .   # when the build cannot find the &lt;registry&gt;\"\n  }\n]"
+ },
+ {
+  "name": "get_related_documents",
+  "toon": "[5]{key,title,tags,type,status,env,overlap}:\n  projects/radar/terraform-state-lock-force-unlock-carefully.md,\"Terraform state lock: force-unlock, carefully\",docker toon etcd oauth projects radar,reference,active,null,4\n  k8s/upgrades/prometheus-alert-for-a-full-pvc-90.md,Prometheus alert for a full PVC (90%),postmortem coredns zsh k8s upgrades,note,active,production,3\n  ci/github/oauth-2-1-with-pkce-step-by-step.md,\"OAuth 2.1 with PKCE, step by step\",ingress ci github,runbook,active,null,2\n  observability/prometheus/networkpolicy-only-the-ingress-namespace-may-reach-the-pod.md,\"NetworkPolicy: only the ingress namespace may reach the pod\",vpn iam gitlab-ci observability prometheus,note,active,null,1\n  meta/read-a-tpm-held-key-with-openssl-3.md,Read a TPM-held key with OpenSSL 3,pg-dump tokens meta,reference,active,null,1",
+  "expected": [
+   {
+    "key": "projects/radar/terraform-state-lock-force-unlock-carefully.md",
+    "title": "Terraform state lock: force-unlock, carefully",
+    "tags": "docker toon etcd oauth projects radar",
+    "type": "reference",
+    "status": "active",
+    "env": null,
+    "overlap": 4
+   },
+   {
+    "key": "k8s/upgrades/prometheus-alert-for-a-full-pvc-90.md",
+    "title": "Prometheus alert for a full PVC (90%)",
+    "tags": "postmortem coredns zsh k8s upgrades",
+    "type": "note",
+    "status": "active",
+    "env": "production",
+    "overlap": 3
+   },
+   {
+    "key": "ci/github/oauth-2-1-with-pkce-step-by-step.md",
+    "title": "OAuth 2.1 with PKCE, step by step",
+    "tags": "ingress ci github",
+    "type": "runbook",
+    "status": "active",
+    "env": null,
+    "overlap": 2
+   },
+   {
+    "key": "observability/prometheus/networkpolicy-only-the-ingress-namespace-may-reach-the-pod.md",
+    "title": "NetworkPolicy: only the ingress namespace may reach the pod",
+    "tags": "vpn iam gitlab-ci observability prometheus",
+    "type": "note",
+    "status": "active",
+    "env": null,
+    "overlap": 1
+   },
+   {
+    "key": "meta/read-a-tpm-held-key-with-openssl-3.md",
+    "title": "Read a TPM-held key with OpenSSL 3",
+    "tags": "pg-dump tokens meta",
+    "type": "reference",
+    "status": "active",
+    "env": null,
+    "overlap": 1
+   }
+  ],
+  "json": "[\n  {\n    \"key\": \"projects/radar/terraform-state-lock-force-unlock-carefully.md\",\n    \"title\": \"Terraform state lock: force-unlock, carefully\",\n    \"folder\": \"projects/radar\",\n    \"tags\": [\n      \"docker\",\n      \"toon\",\n      \"etcd\",\n      \"oauth\",\n      \"projects\",\n      \"radar\"\n    ],\n    \"type\": \"reference\",\n    \"status\": \"active\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 4\n  },\n  {\n    \"key\": \"k8s/upgrades/prometheus-alert-for-a-full-pvc-90.md\",\n    \"title\": \"Prometheus alert for a full PVC (90%)\",\n    \"folder\": \"k8s/upgrades\",\n    \"tags\": [\n      \"postmortem\",\n      \"coredns\",\n      \"zsh\",\n      \"k8s\",\n      \"upgrades\"\n    ],\n    \"type\": \"note\",\n    \"status\": \"active\",\n    \"env\": \"production\",\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 3\n  },\n  {\n    \"key\": \"ci/github/oauth-2-1-with-pkce-step-by-step.md\",\n    \"title\": \"OAuth 2.1 with PKCE, step by step\",\n    \"folder\": \"ci/github\",\n    \"tags\": [\n      \"ingress\",\n      \"ci\",\n      \"github\"\n    ],\n    \"type\": \"runbook\",\n    \"status\": \"active\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 2\n  },\n  {\n    \"key\": \"observability/prometheus/networkpolicy-only-the-ingress-namespace-may-reach-the-pod.md\",\n    \"title\": \"NetworkPolicy: only the ingress namespace may reach the pod\",\n    \"folder\": \"observability/prometheus\",\n    \"tags\": [\n      \"vpn\",\n      \"iam\",\n      \"gitlab-ci\",\n      \"observability\",\n      \"prometheus\"\n    ],\n    \"type\": \"note\",\n    \"status\": \"active\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 1\n  },\n  {\n    \"key\": \"meta/read-a-tpm-held-key-with-openssl-3.md\",\n    \"title\": \"Read a TPM-held key with OpenSSL 3\",\n    \"folder\": \"meta\",\n    \"tags\": [\n      \"pg-dump\",\n      \"tokens\",\n      \"meta\"\n    ],\n    \"type\": \"reference\",\n    \"status\": \"active\",\n    \"env\": null,\n    \"danger\": false,\n    \"summary\": null,\n    \"overlap\": 1\n  }\n]"
+ },
+ {
+  "name": "list_tags",
+  "toon": "[154]{tag,count,folders}:\n  k8s,61,dev/git projects/coach\n  kubectl,43,auth/oauth ci/gitlab db/postgres dev/python dev/typescript\n  helm,35,/ db/redis dev/git linux/networking mcp\n  ingress,28,cloud/aws db/redis dev/node laptop/ubuntu linux/shell notes\n  nginx,25,infra/terraform observability/prometheus\n  cert-manager,21,dev/docker k8s linux/systemd security/secrets\n  tls,18,/ dev/docker infra/terraform linux/networking linux/shell\n  letsencrypt,17,laptop/ubuntu notes observability/logging\n  dns,15,dev/node infra/backup linux/networking linux/systemd\n  coredns,14,dev/typescript infra/dns runbooks\n  terraform,14,security/ssh\n  ansible,11,dev/node\n  postgres,11,dev/python\n  backup,10,ci/github dev/git linux/systemd meta projects/coach\n  pg-dump,10,projects/coach\n  restore,10,ci/github dev/python infra/dns mail meta\n  restic,9,/ cloud/aws db/redis k8s/networking projects/radar runbooks\n  s3,9,cloud/hetzner infra/dns k8s/ingress projects/coach\n  gitlab-ci,8,ci/github db/redis infra/backup infra/dns mail recordings\n  redis,8,/ db/postgres dev/python infra/terraform k8s/networking security/secrets\n  buildkit,7,notes projects/coach\n  compose,7,ci/github k8s security/secrets\n  cron,7,dev/typescript\n  docker,7,/\n  github-actions,7,dev/docker\n  harbor,7,k8s\n  registry,7,mcp\n  bash,6,infra/backup k8s/ingress security/tls\n  journald,6,mcp security/ssh\n  systemd,6,dev/docker\n  zsh,6,laptop/ubuntu mcp\n  gpg,5,/\n  nextjs,5,db/postgres projects/coach runbooks\n  pnpm,5,k8s observability/prometheus\n  prometheus,5,ci/github cloud/aws\n  secrets,5,auth/oauth\n  sops,5,db/redis dev/git dev/typescript\n  ssh,5,security/ssh\n  typescript,5,notes\n  uv,5,k8s/upgrades\n  vault,5,db/redis infra/backup\n  alertmanager,4,security/ssh\n  aws,4,ci/gitlab mcp security/secrets\n  chatgpt,4,dev/typescript k8s/upgrades notes\n  containerd,4,dev/node observability/prometheus security/secrets\n  git,4,dev/node infra/backup security/secrets\n  grafana,4,/ meta recordings\n  iam,4,db/postgres\n  loki,4,linux/systemd\n  node,4,dev/git runbooks/incidents\n  oauth,4,ci/gitlab dev/git\n  postmortem,4,/ dev/python dev/typescript\n  python,4,mail observability/logging recordings\n  react,4,db/postgres k8s recordings\n  rebase,4,dev/typescript laptop/vpn projects/coach\n  rollback,4,cloud/aws runbooks/incidents\n  storageclass,4,db/redis linux/shell\n  tpm,4,dev/docker infra/backup linux/networking\n  worktree,4,dev/python k8s/ingress projects/radar\n  benchmark,3,security/ssh\n  ca,3,security/secrets\n  ceph,3,cloud/hetzner db/postgres\n  claude,3,ci/github dev/git\n  coach,3,k8s/ingress k8s/upgrades mail\n  cri,3,k8s/storage mcp\n  drizzle,3,meta\n  etcd,3,k8s linux/shell security/ssh\n  ffmpeg,3,k8s/upgrades laptop/vpn\n  firefox,3,/ infra/dns runbooks\n  full-text,3,k8s/ingress\n  gnome,3,cloud/aws dev/typescript\n  gotrue,3,dev/python observability/logging security/secrets\n  hetzner,3,laptop/vpn\n  idempotency,3,k8s/ingress k8s/storage\n  imap,3,recordings\n  incident,3,db/postgres infra/backup security/tls\n  jq,3,k8s notes recordings\n  jwt,3,k8s/networking runbooks/incidents\n  latency,3,db/postgres dev/node infra/terraform\n  markdown,3,infra/dns notes recordings\n  mcp,3,infra/dns linux/systemd\n  memory,3,dev/python notes\n  metallb,3,recordings security/secrets\n  migrations,3,cloud/aws infra/dns projects/coach\n  mtls,3,auth/oauth db/redis dev/node\n  networkpolicy,3,ci/github meta\n  notes,3,ci/github\n  pg-trgm,3,dev/node infra/backup infra/terraform\n  playwright,3,k8s/upgrades mail\n  pytest,3,k8s\n  queue,3,cloud/aws k8s/networking k8s/upgrades\n  rbd,3,security/tls\n  search,3,cloud/aws runbooks security/tls\n  serviceaccount,3,dev/typescript security/secrets\n  supabase,3,dev/python infra/backup linux/shell\n  toon,3,db/redis k8s/storage\n  upgrade,3,k8s/upgrades security/ssh\n  vpn,3,ci/github cloud/hetzner infra/terraform\n  websocket,3,linux/networking mcp security/tls\n  wireguard,3,dev/git\n  x509,3,linux/networking\n  apt,2,k8s observability/logging\n  calendar,2,infra/terraform\n  calico,2,ci/gitlab infra/terraform\n  chrome,2,observability/logging runbooks\n  cilium,2,k8s/ingress\n  cpu,2,cloud/hetzner k8s/ingress projects/coach\n  csr,2,dev/python\n  curl,2,mcp\n  device-lock,2,auth/oauth\n  dkim,2,mail\n  dmarc,2,k8s observability/logging\n  eval,2,infra/backup security/ssh\n  flatpak,2,cloud/hetzner projects/coach\n  gladia,2,ci/gitlab mcp\n  haproxy,2,ci/gitlab db/redis\n  http2,2,projects/coach security/secrets\n  httpie,2,laptop/ubuntu\n  invoice,2,ci/gitlab\n  json,2,db/postgres dev/typescript observability/logging\n  keepalived,2,projects/coach\n  kubeadm,2,infra/dns\n  longhorn,2,laptop/vpn\n  meta,2,meta\n  obsidian,2,dev/git k8s\n  ocr,2,db/postgres linux/shell notes\n  oom,2,infra/dns linux/systemd\n  openssl,2,linux/systemd meta recordings\n  pdf,2,db/redis\n  prompting,2,dev/python projects/radar\n  puppeteer,2,observability/logging security/secrets\n  pvc,2,ci/github recordings\n  radar,2,k8s/ingress laptop/ubuntu runbooks\n  rate-limit,2,ci/github dev/python k8s/networking\n  rbac,2,infra/dns\n  retrieval,2,ci/github\n  scraping,2,cloud/hetzner observability/prometheus runbooks/incidents\n  selenium,2,infra/terraform k8s/networking\n  snap,2,/ projects/coach projects/radar\n  spf,2,k8s/networking laptop/ubuntu security/secrets\n  sse,2,mcp\n  statefulset,2,db/postgres\n  tax,2,k8s/ingress\n  tokens,2,k8s/storage security/tls\n  ubuntu,2,dev/git\n  webhook,2,mail security/ssh\n  whisper,2,dev/typescript notes recordings\n  yaml,2,db/redis\n  audio,1,k8s/ingress linux/shell\n  grpc,1,cloud/hetzner\n  protobuf,1,cloud/aws infra/dns laptop/ubuntu\n  retry,1,laptop/vpn\n  smtp,1,notes\n  yq,1,security/tls",
+  "expected": [
+   {
+    "tag": "k8s",
+    "count": 61,
+    "folders": "dev/git projects/coach"
+   },
+   {
+    "tag": "kubectl",
+    "count": 43,
+    "folders": "auth/oauth ci/gitlab db/postgres dev/python dev/typescript"
+   },
+   {
+    "tag": "helm",
+    "count": 35,
+    "folders": "/ db/redis dev/git linux/networking mcp"
+   },
+   {
+    "tag": "ingress",
+    "count": 28,
+    "folders": "cloud/aws db/redis dev/node laptop/ubuntu linux/shell notes"
+   },
+   {
+    "tag": "nginx",
+    "count": 25,
+    "folders": "infra/terraform observability/prometheus"
+   },
+   {
+    "tag": "cert-manager",
+    "count": 21,
+    "folders": "dev/docker k8s linux/systemd security/secrets"
+   },
+   {
+    "tag": "tls",
+    "count": 18,
+    "folders": "/ dev/docker infra/terraform linux/networking linux/shell"
+   },
+   {
+    "tag": "letsencrypt",
+    "count": 17,
+    "folders": "laptop/ubuntu notes observability/logging"
+   },
+   {
+    "tag": "dns",
+    "count": 15,
+    "folders": "dev/node infra/backup linux/networking linux/systemd"
+   },
+   {
+    "tag": "coredns",
+    "count": 14,
+    "folders": "dev/typescript infra/dns runbooks"
+   },
+   {
+    "tag": "terraform",
+    "count": 14,
+    "folders": "security/ssh"
+   },
+   {
+    "tag": "ansible",
+    "count": 11,
+    "folders": "dev/node"
+   },
+   {
+    "tag": "postgres",
+    "count": 11,
+    "folders": "dev/python"
+   },
+   {
+    "tag": "backup",
+    "count": 10,
+    "folders": "ci/github dev/git linux/systemd meta projects/coach"
+   },
+   {
+    "tag": "pg-dump",
+    "count": 10,
+    "folders": "projects/coach"
+   },
+   {
+    "tag": "restore",
+    "count": 10,
+    "folders": "ci/github dev/python infra/dns mail meta"
+   },
+   {
+    "tag": "restic",
+    "count": 9,
+    "folders": "/ cloud/aws db/redis k8s/networking projects/radar runbooks"
+   },
+   {
+    "tag": "s3",
+    "count": 9,
+    "folders": "cloud/hetzner infra/dns k8s/ingress projects/coach"
+   },
+   {
+    "tag": "gitlab-ci",
+    "count": 8,
+    "folders": "ci/github db/redis infra/backup infra/dns mail recordings"
+   },
+   {
+    "tag": "redis",
+    "count": 8,
+    "folders": "/ db/postgres dev/python infra/terraform k8s/networking security/secrets"
+   },
+   {
+    "tag": "buildkit",
+    "count": 7,
+    "folders": "notes projects/coach"
+   },
+   {
+    "tag": "compose",
+    "count": 7,
+    "folders": "ci/github k8s security/secrets"
+   },
+   {
+    "tag": "cron",
+    "count": 7,
+    "folders": "dev/typescript"
+   },
+   {
+    "tag": "docker",
+    "count": 7,
+    "folders": "/"
+   },
+   {
+    "tag": "github-actions",
+    "count": 7,
+    "folders": "dev/docker"
+   },
+   {
+    "tag": "harbor",
+    "count": 7,
+    "folders": "k8s"
+   },
+   {
+    "tag": "registry",
+    "count": 7,
+    "folders": "mcp"
+   },
+   {
+    "tag": "bash",
+    "count": 6,
+    "folders": "infra/backup k8s/ingress security/tls"
+   },
+   {
+    "tag": "journald",
+    "count": 6,
+    "folders": "mcp security/ssh"
+   },
+   {
+    "tag": "systemd",
+    "count": 6,
+    "folders": "dev/docker"
+   },
+   {
+    "tag": "zsh",
+    "count": 6,
+    "folders": "laptop/ubuntu mcp"
+   },
+   {
+    "tag": "gpg",
+    "count": 5,
+    "folders": "/"
+   },
+   {
+    "tag": "nextjs",
+    "count": 5,
+    "folders": "db/postgres projects/coach runbooks"
+   },
+   {
+    "tag": "pnpm",
+    "count": 5,
+    "folders": "k8s observability/prometheus"
+   },
+   {
+    "tag": "prometheus",
+    "count": 5,
+    "folders": "ci/github cloud/aws"
+   },
+   {
+    "tag": "secrets",
+    "count": 5,
+    "folders": "auth/oauth"
+   },
+   {
+    "tag": "sops",
+    "count": 5,
+    "folders": "db/redis dev/git dev/typescript"
+   },
+   {
+    "tag": "ssh",
+    "count": 5,
+    "folders": "security/ssh"
+   },
+   {
+    "tag": "typescript",
+    "count": 5,
+    "folders": "notes"
+   },
+   {
+    "tag": "uv",
+    "count": 5,
+    "folders": "k8s/upgrades"
+   },
+   {
+    "tag": "vault",
+    "count": 5,
+    "folders": "db/redis infra/backup"
+   },
+   {
+    "tag": "alertmanager",
+    "count": 4,
+    "folders": "security/ssh"
+   },
+   {
+    "tag": "aws",
+    "count": 4,
+    "folders": "ci/gitlab mcp security/secrets"
+   },
+   {
+    "tag": "chatgpt",
+    "count": 4,
+    "folders": "dev/typescript k8s/upgrades notes"
+   },
+   {
+    "tag": "containerd",
+    "count": 4,
+    "folders": "dev/node observability/prometheus security/secrets"
+   },
+   {
+    "tag": "git",
+    "count": 4,
+    "folders": "dev/node infra/backup security/secrets"
+   },
+   {
+    "tag": "grafana",
+    "count": 4,
+    "folders": "/ meta recordings"
+   },
+   {
+    "tag": "iam",
+    "count": 4,
+    "folders": "db/postgres"
+   },
+   {
+    "tag": "loki",
+    "count": 4,
+    "folders": "linux/systemd"
+   },
+   {
+    "tag": "node",
+    "count": 4,
+    "folders": "dev/git runbooks/incidents"
+   },
+   {
+    "tag": "oauth",
+    "count": 4,
+    "folders": "ci/gitlab dev/git"
+   },
+   {
+    "tag": "postmortem",
+    "count": 4,
+    "folders": "/ dev/python dev/typescript"
+   },
+   {
+    "tag": "python",
+    "count": 4,
+    "folders": "mail observability/logging recordings"
+   },
+   {
+    "tag": "react",
+    "count": 4,
+    "folders": "db/postgres k8s recordings"
+   },
+   {
+    "tag": "rebase",
+    "count": 4,
+    "folders": "dev/typescript laptop/vpn projects/coach"
+   },
+   {
+    "tag": "rollback",
+    "count": 4,
+    "folders": "cloud/aws runbooks/incidents"
+   },
+   {
+    "tag": "storageclass",
+    "count": 4,
+    "folders": "db/redis linux/shell"
+   },
+   {
+    "tag": "tpm",
+    "count": 4,
+    "folders": "dev/docker infra/backup linux/networking"
+   },
+   {
+    "tag": "worktree",
+    "count": 4,
+    "folders": "dev/python k8s/ingress projects/radar"
+   },
+   {
+    "tag": "benchmark",
+    "count": 3,
+    "folders": "security/ssh"
+   },
+   {
+    "tag": "ca",
+    "count": 3,
+    "folders": "security/secrets"
+   },
+   {
+    "tag": "ceph",
+    "count": 3,
+    "folders": "cloud/hetzner db/postgres"
+   },
+   {
+    "tag": "claude",
+    "count": 3,
+    "folders": "ci/github dev/git"
+   },
+   {
+    "tag": "coach",
+    "count": 3,
+    "folders": "k8s/ingress k8s/upgrades mail"
+   },
+   {
+    "tag": "cri",
+    "count": 3,
+    "folders": "k8s/storage mcp"
+   },
+   {
+    "tag": "drizzle",
+    "count": 3,
+    "folders": "meta"
+   },
+   {
+    "tag": "etcd",
+    "count": 3,
+    "folders": "k8s linux/shell security/ssh"
+   },
+   {
+    "tag": "ffmpeg",
+    "count": 3,
+    "folders": "k8s/upgrades laptop/vpn"
+   },
+   {
+    "tag": "firefox",
+    "count": 3,
+    "folders": "/ infra/dns runbooks"
+   },
+   {
+    "tag": "full-text",
+    "count": 3,
+    "folders": "k8s/ingress"
+   },
+   {
+    "tag": "gnome",
+    "count": 3,
+    "folders": "cloud/aws dev/typescript"
+   },
+   {
+    "tag": "gotrue",
+    "count": 3,
+    "folders": "dev/python observability/logging security/secrets"
+   },
+   {
+    "tag": "hetzner",
+    "count": 3,
+    "folders": "laptop/vpn"
+   },
+   {
+    "tag": "idempotency",
+    "count": 3,
+    "folders": "k8s/ingress k8s/storage"
+   },
+   {
+    "tag": "imap",
+    "count": 3,
+    "folders": "recordings"
+   },
+   {
+    "tag": "incident",
+    "count": 3,
+    "folders": "db/postgres infra/backup security/tls"
+   },
+   {
+    "tag": "jq",
+    "count": 3,
+    "folders": "k8s notes recordings"
+   },
+   {
+    "tag": "jwt",
+    "count": 3,
+    "folders": "k8s/networking runbooks/incidents"
+   },
+   {
+    "tag": "latency",
+    "count": 3,
+    "folders": "db/postgres dev/node infra/terraform"
+   },
+   {
+    "tag": "markdown",
+    "count": 3,
+    "folders": "infra/dns notes recordings"
+   },
+   {
+    "tag": "mcp",
+    "count": 3,
+    "folders": "infra/dns linux/systemd"
+   },
+   {
+    "tag": "memory",
+    "count": 3,
+    "folders": "dev/python notes"
+   },
+   {
+    "tag": "metallb",
+    "count": 3,
+    "folders": "recordings security/secrets"
+   },
+   {
+    "tag": "migrations",
+    "count": 3,
+    "folders": "cloud/aws infra/dns projects/coach"
+   },
+   {
+    "tag": "mtls",
+    "count": 3,
+    "folders": "auth/oauth db/redis dev/node"
+   },
+   {
+    "tag": "networkpolicy",
+    "count": 3,
+    "folders": "ci/github meta"
+   },
+   {
+    "tag": "notes",
+    "count": 3,
+    "folders": "ci/github"
+   },
+   {
+    "tag": "pg-trgm",
+    "count": 3,
+    "folders": "dev/node infra/backup infra/terraform"
+   },
+   {
+    "tag": "playwright",
+    "count": 3,
+    "folders": "k8s/upgrades mail"
+   },
+   {
+    "tag": "pytest",
+    "count": 3,
+    "folders": "k8s"
+   },
+   {
+    "tag": "queue",
+    "count": 3,
+    "folders": "cloud/aws k8s/networking k8s/upgrades"
+   },
+   {
+    "tag": "rbd",
+    "count": 3,
+    "folders": "security/tls"
+   },
+   {
+    "tag": "search",
+    "count": 3,
+    "folders": "cloud/aws runbooks security/tls"
+   },
+   {
+    "tag": "serviceaccount",
+    "count": 3,
+    "folders": "dev/typescript security/secrets"
+   },
+   {
+    "tag": "supabase",
+    "count": 3,
+    "folders": "dev/python infra/backup linux/shell"
+   },
+   {
+    "tag": "toon",
+    "count": 3,
+    "folders": "db/redis k8s/storage"
+   },
+   {
+    "tag": "upgrade",
+    "count": 3,
+    "folders": "k8s/upgrades security/ssh"
+   },
+   {
+    "tag": "vpn",
+    "count": 3,
+    "folders": "ci/github cloud/hetzner infra/terraform"
+   },
+   {
+    "tag": "websocket",
+    "count": 3,
+    "folders": "linux/networking mcp security/tls"
+   },
+   {
+    "tag": "wireguard",
+    "count": 3,
+    "folders": "dev/git"
+   },
+   {
+    "tag": "x509",
+    "count": 3,
+    "folders": "linux/networking"
+   },
+   {
+    "tag": "apt",
+    "count": 2,
+    "folders": "k8s observability/logging"
+   },
+   {
+    "tag": "calendar",
+    "count": 2,
+    "folders": "infra/terraform"
+   },
+   {
+    "tag": "calico",
+    "count": 2,
+    "folders": "ci/gitlab infra/terraform"
+   },
+   {
+    "tag": "chrome",
+    "count": 2,
+    "folders": "observability/logging runbooks"
+   },
+   {
+    "tag": "cilium",
+    "count": 2,
+    "folders": "k8s/ingress"
+   },
+   {
+    "tag": "cpu",
+    "count": 2,
+    "folders": "cloud/hetzner k8s/ingress projects/coach"
+   },
+   {
+    "tag": "csr",
+    "count": 2,
+    "folders": "dev/python"
+   },
+   {
+    "tag": "curl",
+    "count": 2,
+    "folders": "mcp"
+   },
+   {
+    "tag": "device-lock",
+    "count": 2,
+    "folders": "auth/oauth"
+   },
+   {
+    "tag": "dkim",
+    "count": 2,
+    "folders": "mail"
+   },
+   {
+    "tag": "dmarc",
+    "count": 2,
+    "folders": "k8s observability/logging"
+   },
+   {
+    "tag": "eval",
+    "count": 2,
+    "folders": "infra/backup security/ssh"
+   },
+   {
+    "tag": "flatpak",
+    "count": 2,
+    "folders": "cloud/hetzner projects/coach"
+   },
+   {
+    "tag": "gladia",
+    "count": 2,
+    "folders": "ci/gitlab mcp"
+   },
+   {
+    "tag": "haproxy",
+    "count": 2,
+    "folders": "ci/gitlab db/redis"
+   },
+   {
+    "tag": "http2",
+    "count": 2,
+    "folders": "projects/coach security/secrets"
+   },
+   {
+    "tag": "httpie",
+    "count": 2,
+    "folders": "laptop/ubuntu"
+   },
+   {
+    "tag": "invoice",
+    "count": 2,
+    "folders": "ci/gitlab"
+   },
+   {
+    "tag": "json",
+    "count": 2,
+    "folders": "db/postgres dev/typescript observability/logging"
+   },
+   {
+    "tag": "keepalived",
+    "count": 2,
+    "folders": "projects/coach"
+   },
+   {
+    "tag": "kubeadm",
+    "count": 2,
+    "folders": "infra/dns"
+   },
+   {
+    "tag": "longhorn",
+    "count": 2,
+    "folders": "laptop/vpn"
+   },
+   {
+    "tag": "meta",
+    "count": 2,
+    "folders": "meta"
+   },
+   {
+    "tag": "obsidian",
+    "count": 2,
+    "folders": "dev/git k8s"
+   },
+   {
+    "tag": "ocr",
+    "count": 2,
+    "folders": "db/postgres linux/shell notes"
+   },
+   {
+    "tag": "oom",
+    "count": 2,
+    "folders": "infra/dns linux/systemd"
+   },
+   {
+    "tag": "openssl",
+    "count": 2,
+    "folders": "linux/systemd meta recordings"
+   },
+   {
+    "tag": "pdf",
+    "count": 2,
+    "folders": "db/redis"
+   },
+   {
+    "tag": "prompting",
+    "count": 2,
+    "folders": "dev/python projects/radar"
+   },
+   {
+    "tag": "puppeteer",
+    "count": 2,
+    "folders": "observability/logging security/secrets"
+   },
+   {
+    "tag": "pvc",
+    "count": 2,
+    "folders": "ci/github recordings"
+   },
+   {
+    "tag": "radar",
+    "count": 2,
+    "folders": "k8s/ingress laptop/ubuntu runbooks"
+   },
+   {
+    "tag": "rate-limit",
+    "count": 2,
+    "folders": "ci/github dev/python k8s/networking"
+   },
+   {
+    "tag": "rbac",
+    "count": 2,
+    "folders": "infra/dns"
+   },
+   {
+    "tag": "retrieval",
+    "count": 2,
+    "folders": "ci/github"
+   },
+   {
+    "tag": "scraping",
+    "count": 2,
+    "folders": "cloud/hetzner observability/prometheus runbooks/incidents"
+   },
+   {
+    "tag": "selenium",
+    "count": 2,
+    "folders": "infra/terraform k8s/networking"
+   },
+   {
+    "tag": "snap",
+    "count": 2,
+    "folders": "/ projects/coach projects/radar"
+   },
+   {
+    "tag": "spf",
+    "count": 2,
+    "folders": "k8s/networking laptop/ubuntu security/secrets"
+   },
+   {
+    "tag": "sse",
+    "count": 2,
+    "folders": "mcp"
+   },
+   {
+    "tag": "statefulset",
+    "count": 2,
+    "folders": "db/postgres"
+   },
+   {
+    "tag": "tax",
+    "count": 2,
+    "folders": "k8s/ingress"
+   },
+   {
+    "tag": "tokens",
+    "count": 2,
+    "folders": "k8s/storage security/tls"
+   },
+   {
+    "tag": "ubuntu",
+    "count": 2,
+    "folders": "dev/git"
+   },
+   {
+    "tag": "webhook",
+    "count": 2,
+    "folders": "mail security/ssh"
+   },
+   {
+    "tag": "whisper",
+    "count": 2,
+    "folders": "dev/typescript notes recordings"
+   },
+   {
+    "tag": "yaml",
+    "count": 2,
+    "folders": "db/redis"
+   },
+   {
+    "tag": "audio",
+    "count": 1,
+    "folders": "k8s/ingress linux/shell"
+   },
+   {
+    "tag": "grpc",
+    "count": 1,
+    "folders": "cloud/hetzner"
+   },
+   {
+    "tag": "protobuf",
+    "count": 1,
+    "folders": "cloud/aws infra/dns laptop/ubuntu"
+   },
+   {
+    "tag": "retry",
+    "count": 1,
+    "folders": "laptop/vpn"
+   },
+   {
+    "tag": "smtp",
+    "count": 1,
+    "folders": "notes"
+   },
+   {
+    "tag": "yq",
+    "count": 1,
+    "folders": "security/tls"
+   }
+  ]
+ },
+ {
+  "name": "suggest_tags",
+  "toon": "[5]{tag,similarity}:\n  postgres,0.6363636\n  pg-dump,0.30769232\n  pg-trgm,0.2857143\n  restore,0.1764706\n  grpc,0.125",
+  "expected": [
+   {
+    "tag": "postgres",
+    "similarity": 0.6363636
+   },
+   {
+    "tag": "pg-dump",
+    "similarity": 0.30769232
+   },
+   {
+    "tag": "pg-trgm",
+    "similarity": 0.2857143
+   },
+   {
+    "tag": "restore",
+    "similarity": 0.1764706
+   },
+   {
+    "tag": "grpc",
+    "similarity": 0.125
+   }
+  ]
+ },
+ {
+  "name": "list_folders",
+  "toon": "[40]{folder,count}:\n  \"\",15\n  auth/oauth,16\n  ci/github,16\n  ci/gitlab,18\n  cloud/aws,12\n  cloud/hetzner,2\n  db/postgres,12\n  db/redis,12\n  dev/docker,11\n  dev/git,2\n  dev/node,1\n  dev/python,15\n  dev/typescript,14\n  infra/backup,18\n  infra/dns,24\n  infra/terraform,2\n  k8s,8\n  k8s/ingress,5\n  k8s/networking,1\n  k8s/storage,19\n  k8s/upgrades,10\n  laptop/ubuntu,25\n  laptop/vpn,11\n  linux/networking,2\n  linux/shell,11\n  linux/systemd,10\n  mail,10\n  mcp,21\n  meta,17\n  notes,5\n  observability/logging,6\n  observability/prometheus,5\n  projects/coach,24\n  projects/radar,1\n  recordings,5\n  runbooks,2\n  runbooks/incidents,7\n  security/secrets,6\n  security/ssh,24\n  security/tls,20",
+  "expected": [
+   {
+    "folder": "",
+    "count": 15
+   },
+   {
+    "folder": "auth/oauth",
+    "count": 16
+   },
+   {
+    "folder": "ci/github",
+    "count": 16
+   },
+   {
+    "folder": "ci/gitlab",
+    "count": 18
+   },
+   {
+    "folder": "cloud/aws",
+    "count": 12
+   },
+   {
+    "folder": "cloud/hetzner",
+    "count": 2
+   },
+   {
+    "folder": "db/postgres",
+    "count": 12
+   },
+   {
+    "folder": "db/redis",
+    "count": 12
+   },
+   {
+    "folder": "dev/docker",
+    "count": 11
+   },
+   {
+    "folder": "dev/git",
+    "count": 2
+   },
+   {
+    "folder": "dev/node",
+    "count": 1
+   },
+   {
+    "folder": "dev/python",
+    "count": 15
+   },
+   {
+    "folder": "dev/typescript",
+    "count": 14
+   },
+   {
+    "folder": "infra/backup",
+    "count": 18
+   },
+   {
+    "folder": "infra/dns",
+    "count": 24
+   },
+   {
+    "folder": "infra/terraform",
+    "count": 2
+   },
+   {
+    "folder": "k8s",
+    "count": 8
+   },
+   {
+    "folder": "k8s/ingress",
+    "count": 5
+   },
+   {
+    "folder": "k8s/networking",
+    "count": 1
+   },
+   {
+    "folder": "k8s/storage",
+    "count": 19
+   },
+   {
+    "folder": "k8s/upgrades",
+    "count": 10
+   },
+   {
+    "folder": "laptop/ubuntu",
+    "count": 25
+   },
+   {
+    "folder": "laptop/vpn",
+    "count": 11
+   },
+   {
+    "folder": "linux/networking",
+    "count": 2
+   },
+   {
+    "folder": "linux/shell",
+    "count": 11
+   },
+   {
+    "folder": "linux/systemd",
+    "count": 10
+   },
+   {
+    "folder": "mail",
+    "count": 10
+   },
+   {
+    "folder": "mcp",
+    "count": 21
+   },
+   {
+    "folder": "meta",
+    "count": 17
+   },
+   {
+    "folder": "notes",
+    "count": 5
+   },
+   {
+    "folder": "observability/logging",
+    "count": 6
+   },
+   {
+    "folder": "observability/prometheus",
+    "count": 5
+   },
+   {
+    "folder": "projects/coach",
+    "count": 24
+   },
+   {
+    "folder": "projects/radar",
+    "count": 1
+   },
+   {
+    "folder": "recordings",
+    "count": 5
+   },
+   {
+    "folder": "runbooks",
+    "count": 2
+   },
+   {
+    "folder": "runbooks/incidents",
+    "count": 7
+   },
+   {
+    "folder": "security/secrets",
+    "count": 6
+   },
+   {
+    "folder": "security/ssh",
+    "count": 24
+   },
+   {
+    "folder": "security/tls",
+    "count": 20
+   }
+  ]
+ },
+ {
+  "name": "search: odd titles",
+  "toon": "[6]{key,title,tags,status,summary,snippet}:\n  infra/k8s/crashloop-runbook,\"CrashLoopBackOff: find the cause, then fix it\",k8s pods,active,null,kubectl logs --previous & describe\n  notes/2024,\"2024\",notes,active,\"true\",null\n  notes/dash,\"- starts with a dash\",notes,active,null,\"say \\\"hi\\\", then \\\\ back\"\n  notes/unicode,Café — naïve ✓ 日本,notes unicode,active,null,null\n  top-level,A note at the top,\"\",active,null,null\n  notes/null,\"null\",x,active,null,spaces around",
+  "expected": [
+   {
+    "key": "infra/k8s/crashloop-runbook",
+    "title": "CrashLoopBackOff: find the cause, then fix it",
+    "tags": "k8s pods",
+    "status": "active",
+    "summary": null,
+    "snippet": "kubectl logs --previous & describe"
+   },
+   {
+    "key": "notes/2024",
+    "title": "2024",
+    "tags": "notes",
+    "status": "active",
+    "summary": "true",
+    "snippet": null
+   },
+   {
+    "key": "notes/dash",
+    "title": "- starts with a dash",
+    "tags": "notes",
+    "status": "active",
+    "summary": null,
+    "snippet": "say \"hi\", then \\ back"
+   },
+   {
+    "key": "notes/unicode",
+    "title": "Café — naïve ✓ 日本",
+    "tags": "notes unicode",
+    "status": "active",
+    "summary": null,
+    "snippet": null
+   },
+   {
+    "key": "top-level",
+    "title": "A note at the top",
+    "tags": "",
+    "status": "active",
+    "summary": null,
+    "snippet": null
+   },
+   {
+    "key": "notes/null",
+    "title": "null",
+    "tags": "x",
+    "status": "active",
+    "summary": null,
+    "snippet": "spaces around"
+   }
+  ]
+ },
+ {
+  "name": "search: tag with a space (blocks)",
+  "toon": "[2]:\n  - key: a/one\n    title: One\n    tags[2]: two words,k8s\n    status: active\n  - key: b/two\n    title: \"Two, with comma\"\n    tags[1]: k8s\n    status: active",
+  "expected": [
+   {
+    "key": "a/one",
+    "title": "One",
+    "tags": [
+     "two words",
+     "k8s"
+    ],
+    "status": "active"
+   },
+   {
+    "key": "b/two",
+    "title": "Two, with comma",
+    "tags": [
+     "k8s"
+    ],
+    "status": "active"
+   }
+  ]
+ },
+ {
+  "name": "search: folder not in key",
+  "toon": "[2]{key,title,folder,tags,status}:\n  a/one,One,elsewhere,k8s,active\n  b/two,Two,b,k8s helm,active",
+  "expected": [
+   {
+    "key": "a/one",
+    "title": "One",
+    "folder": "elsewhere",
+    "tags": "k8s",
+    "status": "active"
+   },
+   {
+    "key": "b/two",
+    "title": "Two",
+    "folder": "b",
+    "tags": "k8s helm",
+    "status": "active"
+   }
+  ]
+ },
+ {
+  "name": "search: empty",
+  "toon": "[]",
+  "expected": []
+ },
+ {
+  "name": "related: one row",
+  "toon": "[1]{key,title,tags,type,status,env,danger,summary,overlap}:\n  infra/postgres/backup-restore,\"Postgres: backup and restore\",postgres backup,runbook,active,production,true,\"Nightly pg_dump, restore one table.\",2",
+  "expected": [
+   {
+    "key": "infra/postgres/backup-restore",
+    "title": "Postgres: backup and restore",
+    "tags": "postgres backup",
+    "type": "runbook",
+    "status": "active",
+    "env": "production",
+    "danger": true,
+    "summary": "Nightly pg_dump, restore one table.",
+    "overlap": 2
+   }
+  ]
+ },
+ {
+  "name": "tags: top level folder",
+  "toon": "[2]:\n  - tag: k8s\n    count: 3\n    folders[2]: \"\",infra/k8s\n  - tag: odd\n    count: 1\n    folders[1]: with space",
+  "expected": [
+   {
+    "tag": "k8s",
+    "count": 3,
+    "folders": [
+     "",
+     "infra/k8s"
+    ]
+   },
+   {
+    "tag": "odd",
+    "count": 1,
+    "folders": [
+     "with space"
+    ]
+   }
+  ]
+ },
+ {
+  "name": "folders: plain",
+  "toon": "[2]{folder,count}:\n  \"\",2\n  infra/k8s,5",
+  "expected": [
+   {
+    "folder": "",
+    "count": 2
+   },
+   {
+    "folder": "infra/k8s",
+    "count": 5
+   }
+  ]
+ }
+]

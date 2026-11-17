@@ -1,0 +1,80 @@
+# wattson read-only access to one cluster (docs/design.md 10.1).
+# Applied only by `wattson k8s add <context>`, after the user says yes. It is the only write
+# wattson ever makes to a cluster. The connector then builds ~/.config/wattson/kube/<context>.yaml
+# (mode 600) from this service account's token.
+# The account lives in an EXISTING namespace, filled in for __NAMESPACE__: on the cluster that
+# hosts wattson, its own namespace (grimoire); elsewhere the one given with --namespace.
+# wattson never creates a namespace.
+# Built-in ClusterRole "view": get/list/watch on most namespaced objects, pods/log and events;
+# it cannot read Secrets and cannot change anything. "view" does not cover nodes, so a small
+# extra ClusterRole gives get/list/watch on nodes only (for scheduling problems). Remove with:
+#   kubectl delete clusterrolebinding wattson-reader-view wattson-reader-nodes
+#   kubectl delete clusterrole wattson-reader-nodes
+#   kubectl -n <namespace> delete serviceaccount wattson-reader
+#   kubectl -n <namespace> delete secret wattson-reader-token
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: wattson-reader
+  namespace: __NAMESPACE__
+  labels:
+    app.kubernetes.io/name: wattson-reader
+    app.kubernetes.io/part-of: wattson
+# No pod runs as this account: its token is used only from the laptop.
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wattson-reader-token
+  namespace: __NAMESPACE__
+  labels:
+    app.kubernetes.io/name: wattson-reader
+    app.kubernetes.io/part-of: wattson
+  annotations:
+    kubernetes.io/service-account.name: wattson-reader
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: wattson-reader-view
+  labels:
+    app.kubernetes.io/name: wattson-reader
+    app.kubernetes.io/part-of: wattson
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: wattson-reader
+    namespace: __NAMESPACE__
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: wattson-reader-nodes
+  labels:
+    app.kubernetes.io/name: wattson-reader
+    app.kubernetes.io/part-of: wattson
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: wattson-reader-nodes
+  labels:
+    app.kubernetes.io/name: wattson-reader
+    app.kubernetes.io/part-of: wattson
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: wattson-reader-nodes
+subjects:
+  - kind: ServiceAccount
+    name: wattson-reader
+    namespace: __NAMESPACE__

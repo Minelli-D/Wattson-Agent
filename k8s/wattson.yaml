@@ -1,0 +1,1085 @@
+# wattson on Kubernetes. k8s/deploy.sh fills in the ${...} values from settings.env and
+# applies this file. The Secret ${APP_NAME} (three tokens) is not in it: deploy.sh makes it
+# once, and never changes it (the same for the Secret ${APP_NAME}-shield, the shield's token).
+#
+#   laptop: wattson CLI ──kubectl port-forward──► orchestrator (127.0.0.1:9000, no Service)
+# begin: sidecar
+#                                                   ├──A2A──► triage    (Service :9001) + llama.cpp on 127.0.0.1:8081
+# end: sidecar
+# begin: kubeai
+#                                                   ├──A2A──► triage    (Service :9001) ──► KubeAI proxy ──► llama.cpp
+#                                                   ├──the Guard's small model───────────────► KubeAI proxy (the same Model)
+# end: kubeai
+#                                                   └──A2A──► knowledge (Service :9002) ──HTTPS──► Grimoire MCP
+# begin: cognee
+#                                                                └──MCP──► Cognee (Service :8000, "recall" only; k8s/cognee.sh)
+# end: cognee
+# begin: shield
+#   orchestrator ──the evidence and the documents──► shield (Service :9003): the injection model, scores only
+# end: shield
+# begin: telemetry
+#   the three agents ──OTLP/HTTP :4318──► Tempo (Service, the traces) ◄──TraceQL :3200── Grafana (GRAFANA_NAMESPACE)
+# end: telemetry
+#
+# No pod gets a Kubernetes token (automountServiceAccountToken: false) and no ServiceAccount
+# has a Role. Every container: non-root (10001), read-only root filesystem, no capabilities,
+# RuntimeDefault seccomp, requests and limits.
+#
+# A line that ends with "# optional: NAME" is left out when the setting NAME is empty.
+# begin: sidecar -- from here to "end: sidecar" only with MODEL_BACKEND=sidecar; the same for kubeai.
+# end: sidecar
+# begin: telemetry -- from here to "end: telemetry" only with TELEMETRY=on: Tempo, its volume and
+# network rule, the address the agents send traces to, and their way out to Tempo.
+# end: telemetry
+# begin: shield -- from here to "end: shield" only with INJECTION_MODE warn or cut: the shield pod
+# (the injection model), its Service and network rule, and the orchestrator's way to it. Its token
+# is in the Secret ${APP_NAME}-shield, made once by deploy.sh.
+# end: shield
+# begin: cognee -- from here to "end: cognee" only with COGNEE_RECALL=on: the settings of "seen
+# before" and the knowledge agent's way out to the pod ${APP_NAME}-cognee. That pod is not in
+# this file (k8s/cognee.sh makes it); when it is down, the answers come without lessons.
+# end: cognee
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${ORCHESTRATOR}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: orchestrator }
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${TRIAGE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${KNOWLEDGE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: knowledge }
+automountServiceAccountToken: false
+# begin: shield
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${SHIELD}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: shield }
+automountServiceAccountToken: false
+# end: shield
+# begin: telemetry
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${TEMPO}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+automountServiceAccountToken: false
+# end: telemetry
+---
+# ---- volumes ------------------------------------------------------------------------
+# The task history (SQLite, metadata only: docs/design.md 10.5).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP_NAME}-data
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: orchestrator }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ${STORAGE_CLASS}
+  resources:
+    requests: { storage: ${DATA_SIZE} }
+---
+# The Grimoire OAuth client and its tokens.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP_NAME}-knowledge-data
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: knowledge }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ${STORAGE_CLASS}
+  resources:
+    requests: { storage: ${KNOWLEDGE_DATA_SIZE} }
+# begin: telemetry
+---
+# The traces (Tempo): its blocks, its write-ahead log, its work files.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP_NAME}-tempo-data
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ${STORAGE_CLASS}
+  resources:
+    requests: { storage: ${TEMPO_SIZE} }
+# end: telemetry
+# begin: sidecar -- the volume of the model file. With KubeAI, KubeAI keeps the model.
+---
+# The model file. Downloaded once by the init container of the triage pod.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP_NAME}-models
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ${STORAGE_CLASS}
+  resources:
+    requests: { storage: ${MODELS_SIZE} }
+# end: sidecar
+---
+# ---- the rules of the Guard: the ConfigMap ${APP_NAME}-guard ---------------------------
+# deploy.sh puts it on the next line, made from k8s/guard/rules.yaml and k8s/guard/policies.cedar
+# (their exact text, as JSON). The orchestrator reads them at /etc/wattson/guard. To change only
+# the rules (no new image): edit the two files, then bash k8s/guard.sh --apply.
+# guard: the ConfigMap
+---
+# ---- the orchestrator: NO Service, NO Ingress. The CLI reaches it with kubectl port-forward.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${ORCHESTRATOR}
+  labels: { app: ${ORCHESTRATOR}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: orchestrator }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  # The volume can be used by one pod at a time: the old pod stops before the new one starts.
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: ${ORCHESTRATOR} }
+  template:
+    metadata:
+      labels: { app: ${ORCHESTRATOR}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: orchestrator }
+      annotations:
+        # The SHA-256 of the rules of the Guard (deploy.sh, guard.sh): new rules start a new pod.
+        wattson/guard-config: "${GUARD_CONFIG_SHA256}"
+    spec:
+      serviceAccountName: ${ORCHESTRATOR}
+      automountServiceAccountToken: false
+      # The addresses of the other Services of the namespace are not put into the environment.
+      enableServiceLinks: false
+      imagePullSecrets:  # optional: PULL_SECRET
+        - name: ${PULL_SECRET}  # optional: PULL_SECRET
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: orchestrator
+          image: ${IMAGE}
+          command: [wattson-orchestrator]
+          env:
+            # 127.0.0.1 only: nothing in the cluster can reach it; kubectl port-forward can.
+            - { name: WATTSON_LISTEN_HOST, value: "127.0.0.1" }
+            - { name: WATTSON_PORT, value: "${ORCHESTRATOR_PORT}" }
+            - name: WATTSON_TOKEN
+              valueFrom: { secretKeyRef: { name: ${APP_NAME}, key: WATTSON_TOKEN } }
+            - { name: TRIAGE_URL, value: "http://${TRIAGE}:${TRIAGE_PORT}" }
+            # begin: kubeai
+            # How long it waits for triage (60 s by default): longer than triage's own limit, so
+            # a cold start of the KubeAI model pod still ends with triage's answer.
+            - { name: TRIAGE_TIMEOUT_S, value: "180" }
+            # end: kubeai
+            - name: TRIAGE_TOKEN
+              valueFrom: { secretKeyRef: { name: ${APP_NAME}, key: TRIAGE_TOKEN } }
+            - { name: KNOWLEDGE_URL, value: "http://${KNOWLEDGE}:${KNOWLEDGE_PORT}" }
+            - name: KNOWLEDGE_TOKEN
+              valueFrom: { secretKeyRef: { name: ${APP_NAME}, key: KNOWLEDGE_TOKEN } }
+            # The task history (SQLite) lives on the volume, not in /tmp.
+            - { name: WATTSON_DATA_DIR, value: /data }
+            - { name: HISTORY_RETENTION_DAYS, value: "${HISTORY_RETENTION_DAYS}" }
+            - { name: TASK_TTL_MINUTES, value: "${TASK_TTL_MINUTES}" }
+            # The Guard: enforce, monitor (records its verdict, blocks nothing) or off; its rules
+            # (the ConfigMap ${APP_NAME}-guard); and its small model. GUARD_MODEL_URL empty: the
+            # rules only (with the sidecar, whose model the orchestrator cannot reach).
+            - { name: GUARD_MODE, value: "${GUARD_MODE}" }
+            - { name: GUARD_TIMEOUT_S, value: "${GUARD_TIMEOUT_S}" }
+            - { name: GUARD_MODEL_URL, value: "${GUARD_MODEL_URL}" }
+            - { name: GUARD_MODEL, value: "${GUARD_MODEL}" }
+            - { name: GUARD_RULES_FILE, value: /etc/wattson/guard/rules.yaml }
+            - { name: GUARD_POLICIES_FILE, value: /etc/wattson/guard/policies.cedar }
+            # The injection model: off, warn (the review names what it flags) or cut (it is
+            # removed). It reads the evidence and the documents after the rules of the Guard.
+            - { name: INJECTION_MODE, value: "${INJECTION_MODE}" }
+            # begin: shield
+            - { name: SHIELD_URL, value: "http://${SHIELD}:${SHIELD_PORT}" }
+            - name: SHIELD_TOKEN
+              valueFrom: { secretKeyRef: { name: ${SHIELD_SECRET}, key: SHIELD_TOKEN } }
+            - { name: INJECTION_MODEL, value: "${INJECTION_MODEL_REPO}" }
+            - { name: INJECTION_THRESHOLD, value: "${INJECTION_THRESHOLD}" }
+            - { name: INJECTION_TIMEOUT_S, value: "${INJECTION_TIMEOUT_S}" }
+            # end: shield
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+            # begin: telemetry
+            # The trace of each task goes to Tempo (OTLP over HTTP); the code redacts the contents.
+            - { name: OTEL_EXPORTER_OTLP_ENDPOINT, value: "${OTLP_ENDPOINT}" }
+            - { name: OTEL_SERVICE_NAME, value: "${ORCHESTRATOR}" }
+            # end: telemetry
+          # It listens on 127.0.0.1, which the kubelet cannot reach: the probes run inside.
+          startupProbe:
+            exec: { command: [/app/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${ORCHESTRATOR_PORT}/healthz', timeout=3)"] }
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            exec: { command: [/app/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${ORCHESTRATOR_PORT}/healthz', timeout=3)"] }
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe:
+            exec: { command: [/app/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${ORCHESTRATOR_PORT}/healthz', timeout=3)"] }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests: { cpu: ${ORCHESTRATOR_REQ_CPU}, memory: ${ORCHESTRATOR_REQ_MEMORY} }
+            limits: { cpu: ${ORCHESTRATOR_LIM_CPU}, memory: ${ORCHESTRATOR_LIM_MEMORY} }
+          securityContext: &locked
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: tmp, mountPath: /tmp }
+            - { name: guard, mountPath: /etc/wattson/guard, readOnly: true }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: ${APP_NAME}-data }
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+        - name: guard
+          configMap: { name: ${APP_NAME}-guard }
+---
+# begin: sidecar
+# ---- the triage agent, with the small model next to it --------------------------------
+# end: sidecar
+# begin: kubeai
+# ---- the triage agent; KubeAI serves its model (k8s/kubeai.sh, MODEL_BACKEND=kubeai) ---
+# No model download, no llama.cpp container, no model volume: the triage container asks the
+# KubeAI proxy (LLM_BASE_URL) for the KubeAI Model LLM_MODEL.
+# end: kubeai
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${TRIAGE}
+  labels: { app: ${TRIAGE}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: ${TRIAGE} }
+  template:
+    metadata:
+      labels: { app: ${TRIAGE}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+    spec:
+      serviceAccountName: ${TRIAGE}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      imagePullSecrets:  # optional: PULL_SECRET
+        - name: ${PULL_SECRET}  # optional: PULL_SECRET
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      # begin: sidecar -- the model download and the llama.cpp server
+      initContainers:
+        # Puts the model file on the volume when it is missing or not the right one: it
+        # downloads to a temporary name on the same volume, checks the SHA-256, then renames.
+        # A file that is already there and right is only checked (a few seconds). Then the
+        # files of an earlier MODEL_FILE are removed: the volume has room for two models.
+        - name: fetch-model
+          image: ${FETCH_IMAGE}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              target="/models/$FILE_NAME"
+              partial="/models/.partial-$FILE_NAME"
+              if [ -f "$target" ] && echo "$SHA256  $target" | sha256sum -c -s -; then
+                echo "fetch-model: $FILE_NAME is there and its SHA-256 is right."
+              else
+                echo "fetch-model: downloading $FILE_NAME."
+                rm -f "$partial"
+                curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' \
+                  --retry 3 --retry-delay 10 --connect-timeout 20 --max-time 3600 \
+                  --output "$partial" "$SOURCE_URL"
+                if ! echo "$SHA256  $partial" | sha256sum -c -s -; then
+                  rm -f "$partial"
+                  echo "fetch-model: the downloaded file has the wrong SHA-256. It was removed." >&2
+                  exit 1
+                fi
+                mv -f "$partial" "$target"
+                echo "fetch-model: $FILE_NAME downloaded and checked."
+              fi
+              for old in /models/*.gguf /models/.partial-*; do
+                if [ -e "$old" ] && [ "$old" != "$target" ]; then
+                  rm -f "$old"
+                  echo "fetch-model: removed the old file $(basename "$old")."
+                fi
+              done
+          env:
+            - { name: FILE_NAME, value: "${MODEL_FILE}" }
+            - { name: SOURCE_URL, value: "${MODEL_URL}" }
+            - { name: SHA256, value: "${MODEL_SHA256}" }
+            - { name: HOME, value: /tmp }
+          resources:
+            requests: { cpu: ${FETCH_REQ_CPU}, memory: ${FETCH_REQ_MEMORY} }
+            limits: { cpu: ${FETCH_LIM_CPU}, memory: ${FETCH_LIM_MEMORY} }
+          securityContext: &locked
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: models, mountPath: /models }
+            - { name: tmp-fetch, mountPath: /tmp }
+      # end: sidecar
+      containers:
+        # begin: sidecar
+        # The llama.cpp server: on 127.0.0.1 only, so only the triage container can ask it.
+        - name: llama
+          image: ${LLAMA_IMAGE}
+          args:
+            - -m
+            - /models/${MODEL_FILE}
+            - --host
+            - "127.0.0.1"
+            - --port
+            - "${LLAMA_PORT}"
+            - -c
+            - "${LLAMA_CTX}"
+            - -t
+            - "${LLAMA_THREADS}"
+            # Reading the prompt is the heavy part: it gets more threads (settings.env).
+            - -tb
+            - "${LLAMA_BATCH_THREADS}"
+            # As measured (docs/decision-model.md): two slots, because triage asks for the
+            # classification and the hints at the same time; small batches (faster on CPU);
+            # the model read into memory (not mapped); no "thinking" step; and the prompt cache
+            # in RAM off (its default is 8 GiB).
+            - -np
+            - "2"
+            - -b
+            - "512"
+            - -ub
+            - "128"
+            - -lm
+            - none
+            - --reasoning
+            - "off"
+            - --cache-ram
+            - "0"
+            - --no-webui
+            - --no-slots
+          env:
+            # The image sets 0.0.0.0:8080; these say the same as the arguments above.
+            - { name: LLAMA_ARG_HOST, value: "127.0.0.1" }
+            - { name: LLAMA_ARG_PORT, value: "${LLAMA_PORT}" }
+            - { name: HOME, value: /tmp }
+          # The image has curl. /health answers 200 when the model is loaded. No readiness
+          # probe: when the model is down, the triage agent still answers with its rules.
+          startupProbe:
+            exec: { command: [curl, -fsS, -m, "3", -o, /dev/null, "http://127.0.0.1:${LLAMA_PORT}/health"] }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            exec: { command: [curl, -fsS, -m, "5", -o, /dev/null, "http://127.0.0.1:${LLAMA_PORT}/health"] }
+            periodSeconds: 30
+            timeoutSeconds: 8
+            failureThreshold: 3
+          resources:
+            requests: { cpu: ${LLAMA_REQ_CPU}, memory: ${LLAMA_REQ_MEMORY} }
+            limits: { cpu: ${LLAMA_LIM_CPU}, memory: ${LLAMA_LIM_MEMORY} }
+          securityContext: *locked
+          volumeMounts:
+            - { name: models, mountPath: /models, readOnly: true }
+            - { name: tmp-llama, mountPath: /tmp }
+        # end: sidecar
+        - name: triage
+          image: ${IMAGE}
+          command: [wattson-triage]
+          ports:
+            - { name: a2a, containerPort: ${TRIAGE_PORT} }
+          env:
+            - { name: TRIAGE_LISTEN_HOST, value: "0.0.0.0" }
+            - { name: TRIAGE_PORT, value: "${TRIAGE_PORT}" }
+            - { name: TRIAGE_PUBLIC_URL, value: "http://${TRIAGE}:${TRIAGE_PORT}/" }
+            - name: TRIAGE_TOKEN
+              valueFrom: { secretKeyRef: { name: ${APP_NAME}, key: TRIAGE_TOKEN } }
+            # begin: sidecar
+            - { name: LLAMA_URL, value: "http://127.0.0.1:${LLAMA_PORT}" }
+            # end: sidecar
+            - { name: LLM_BASE_URL, value: "${LLM_BASE_URL}" }
+            - { name: LLM_MODEL, value: "${LLM_MODEL}" }
+            - { name: MODEL_NAME, value: "${MODEL_NAME}" }
+            # begin: kubeai
+            # Triage's limit for the model (50 s by default): the KubeAI model pod may be at 0,
+            # and a cold start takes about a minute. After it, the keyword rules answer.
+            - { name: TRIAGE_TIMEOUT_S, value: "150" }
+            # end: kubeai
+            - { name: MIN_CONFIDENCE, value: "${MIN_CONFIDENCE}" }
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+            # begin: telemetry
+            # The trace of each task goes to Tempo (OTLP over HTTP); the code redacts the contents.
+            - { name: OTEL_EXPORTER_OTLP_ENDPOINT, value: "${OTLP_ENDPOINT}" }
+            - { name: OTEL_SERVICE_NAME, value: "${TRIAGE}" }
+            # end: telemetry
+          startupProbe:
+            httpGet: { path: /healthz, port: a2a }
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet: { path: /healthz, port: a2a }
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /healthz, port: a2a }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests: { cpu: ${TRIAGE_REQ_CPU}, memory: ${TRIAGE_REQ_MEMORY} }
+            limits: { cpu: ${TRIAGE_LIM_CPU}, memory: ${TRIAGE_LIM_MEMORY} }
+          # begin: sidecar
+          securityContext: *locked
+          # end: sidecar
+          # begin: kubeai
+          securityContext: &locked
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          # end: kubeai
+          volumeMounts:
+            - { name: tmp-triage, mountPath: /tmp }
+      volumes:
+        # begin: sidecar
+        - name: models
+          persistentVolumeClaim: { claimName: ${APP_NAME}-models }
+        - name: tmp-fetch
+          emptyDir: { sizeLimit: 16Mi }
+        - name: tmp-llama
+          emptyDir: { sizeLimit: 64Mi }
+        # end: sidecar
+        - name: tmp-triage
+          emptyDir: { sizeLimit: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${TRIAGE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+spec:
+  type: ClusterIP
+  selector: { app: ${TRIAGE} }
+  ports:
+    - { name: a2a, protocol: TCP, port: ${TRIAGE_PORT}, targetPort: a2a }
+---
+# ---- the knowledge agent: Grimoire through its MCP server, read-only -------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${KNOWLEDGE}
+  labels: { app: ${KNOWLEDGE}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: knowledge }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: ${KNOWLEDGE} }
+  template:
+    metadata:
+      labels: { app: ${KNOWLEDGE}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: knowledge }
+    spec:
+      serviceAccountName: ${KNOWLEDGE}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      imagePullSecrets:  # optional: PULL_SECRET
+        - name: ${PULL_SECRET}  # optional: PULL_SECRET
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: knowledge
+          image: ${IMAGE}
+          command: [wattson-knowledge]
+          ports:
+            - { name: a2a, containerPort: ${KNOWLEDGE_PORT} }
+          env:
+            - { name: KNOWLEDGE_LISTEN_HOST, value: "0.0.0.0" }
+            - { name: KNOWLEDGE_PORT, value: "${KNOWLEDGE_PORT}" }
+            - { name: KNOWLEDGE_PUBLIC_URL, value: "http://${KNOWLEDGE}:${KNOWLEDGE_PORT}/" }
+            - name: KNOWLEDGE_TOKEN
+              valueFrom: { secretKeyRef: { name: ${APP_NAME}, key: KNOWLEDGE_TOKEN } }
+            - { name: GRIMOIRE_MCP_URL, value: "${GRIMOIRE_MCP_URL}" }
+            # "Seen before": past lessons from Cognee memory, read-only, after Grimoire (on or off).
+            - { name: COGNEE_RECALL, value: "${COGNEE_RECALL}" }
+            # begin: cognee
+            - { name: COGNEE_RECALL_URL, value: "${COGNEE_RECALL_URL}" }
+            - { name: COGNEE_RECALL_DATASET, value: "${COGNEE_RECALL_DATASET}" }
+            - { name: COGNEE_RECALL_LESSONS, value: "${COGNEE_RECALL_LESSONS}" }
+            - { name: COGNEE_RECALL_TIMEOUT_S, value: "${COGNEE_RECALL_TIMEOUT_S}" }
+            # end: cognee
+            # The OAuth client and tokens of Grimoire live on the volume, not in /tmp.
+            - { name: KNOWLEDGE_DATA_DIR, value: /data }
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+            # begin: telemetry
+            # The trace of each task goes to Tempo (OTLP over HTTP); the code redacts the contents.
+            - { name: OTEL_EXPORTER_OTLP_ENDPOINT, value: "${OTLP_ENDPOINT}" }
+            - { name: OTEL_SERVICE_NAME, value: "${KNOWLEDGE}" }
+            # end: telemetry
+          startupProbe:
+            httpGet: { path: /healthz, port: a2a }
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet: { path: /healthz, port: a2a }
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /healthz, port: a2a }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests: { cpu: ${KNOWLEDGE_REQ_CPU}, memory: ${KNOWLEDGE_REQ_MEMORY} }
+            limits: { cpu: ${KNOWLEDGE_LIM_CPU}, memory: ${KNOWLEDGE_LIM_MEMORY} }
+          securityContext: &locked
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: ${APP_NAME}-knowledge-data }
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${KNOWLEDGE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: knowledge }
+spec:
+  type: ClusterIP
+  selector: { app: ${KNOWLEDGE} }
+  ports:
+    - { name: a2a, protocol: TCP, port: ${KNOWLEDGE_PORT}, targetPort: a2a }
+# begin: shield
+---
+# ---- the shield: the small prompt-injection model (INJECTION_MODE warn or cut) ------------
+# Its own small image (Dockerfile.shield: Python, ONNX Runtime, the tokenizer, one file). The
+# init container downloads the three pinned files of INJECTION_MODEL_REPO at INJECTION_MODEL_COMMIT
+# into an emptyDir and checks each SHA-256; a file with another SHA-256 stops the pod. No volume:
+# a new pod downloads them again (302 MB for Horizon small, a few seconds). The shield answers
+# POST /v1/classify with scores only; the orchestrator decides (INJECTION_THRESHOLD).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${SHIELD}
+  labels: { app: ${SHIELD}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: shield }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  # No volume: the new pod starts (and downloads) before the old one stops.
+  strategy: { type: RollingUpdate, rollingUpdate: { maxSurge: 1, maxUnavailable: 0 } }
+  selector:
+    matchLabels: { app: ${SHIELD} }
+  template:
+    metadata:
+      labels: { app: ${SHIELD}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: shield }
+    spec:
+      serviceAccountName: ${SHIELD}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      imagePullSecrets:  # optional: PULL_SECRET
+        - name: ${PULL_SECRET}  # optional: PULL_SECRET
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        # Each file: download to a temporary name, check the SHA-256, then rename. A wrong
+        # SHA-256 removes the file and stops the pod: the Guard then checks with its rules only.
+        - name: fetch-model
+          image: ${FETCH_IMAGE}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              fetch() {  # NAME PATH-IN-THE-REPO SHA256
+                partial="/models/.partial-$1"
+                echo "fetch-model: downloading $2."
+                curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' \
+                  --retry 3 --retry-delay 10 --connect-timeout 20 --max-time 1800 \
+                  --output "$partial" "$BASE_URL/$2"
+                if ! echo "$3  $partial" | sha256sum -c -s -; then
+                  rm -f "$partial"
+                  echo "fetch-model: $2 has the wrong SHA-256. It was removed." >&2
+                  exit 1
+                fi
+                mv -f "$partial" "/models/$1"
+                echo "fetch-model: $2 downloaded and checked."
+              }
+              fetch model.onnx "$ONNX_FILE" "$ONNX_SHA256"
+              fetch tokenizer.json "$TOKENIZER_FILE" "$TOKENIZER_SHA256"
+              fetch config.json "$CONFIG_FILE" "$CONFIG_SHA256"
+          env:
+            - { name: BASE_URL, value: "${INJECTION_BASE_URL}" }
+            # Not MODEL_FILE: the deploy fills in that setting (the model of triage) in this file.
+            - { name: ONNX_FILE, value: "${INJECTION_MODEL_FILE}" }
+            - { name: ONNX_SHA256, value: "${INJECTION_MODEL_SHA256}" }
+            - { name: TOKENIZER_FILE, value: "${INJECTION_TOKENIZER_FILE}" }
+            - { name: TOKENIZER_SHA256, value: "${INJECTION_TOKENIZER_SHA256}" }
+            - { name: CONFIG_FILE, value: "${INJECTION_CONFIG_FILE}" }
+            - { name: CONFIG_SHA256, value: "${INJECTION_CONFIG_SHA256}" }
+            - { name: HOME, value: /tmp }
+          resources:
+            requests: { cpu: ${FETCH_REQ_CPU}, memory: ${FETCH_REQ_MEMORY} }
+            limits: { cpu: ${FETCH_LIM_CPU}, memory: ${FETCH_LIM_MEMORY} }
+          securityContext: &locked
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: models, mountPath: /models }
+            - { name: tmp-fetch, mountPath: /tmp }
+      containers:
+        - name: shield
+          image: ${SHIELD_IMAGE}
+          command: [python, -I, /app/shield.py]
+          ports:
+            - { name: http, containerPort: ${SHIELD_PORT} }
+          env:
+            - { name: SHIELD_LISTEN_HOST, value: "0.0.0.0" }
+            - { name: SHIELD_PORT, value: "${SHIELD_PORT}" }
+            - name: SHIELD_TOKEN
+              valueFrom: { secretKeyRef: { name: ${SHIELD_SECRET}, key: SHIELD_TOKEN } }
+            - { name: SHIELD_MODEL_PATH, value: /models/model.onnx }
+            - { name: SHIELD_TOKENIZER_PATH, value: /models/tokenizer.json }
+            - { name: SHIELD_CONFIG_PATH, value: /models/config.json }
+            - { name: INJECTION_LABEL, value: "${INJECTION_LABEL}" }
+            - { name: INJECTION_WINDOW, value: "${INJECTION_WINDOW}" }
+            # The whole cores of the CPU limit (SHIELD_LIMITS).
+            - { name: SHIELD_THREADS, value: "${SHIELD_THREADS}" }
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+          # /healthz answers once the model is loaded (about 2 s after the download).
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests: { cpu: ${SHIELD_REQ_CPU}, memory: ${SHIELD_REQ_MEMORY} }
+            limits: { cpu: ${SHIELD_LIM_CPU}, memory: ${SHIELD_LIM_MEMORY} }
+          securityContext: *locked
+          volumeMounts:
+            - { name: models, mountPath: /models, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        # Room for a bigger model too (Horizon base: 641 MB).
+        - name: models
+          emptyDir: { sizeLimit: 1Gi }
+        - name: tmp-fetch
+          emptyDir: { sizeLimit: 16Mi }
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${SHIELD}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: shield }
+spec:
+  type: ClusterIP
+  selector: { app: ${SHIELD} }
+  ports:
+    - { name: http, protocol: TCP, port: ${SHIELD_PORT}, targetPort: http }
+# end: shield
+# begin: telemetry
+---
+# ---- Tempo: the traces of the three agents (TELEMETRY=on) -----------------------------
+# One process (target "all", no Kafka): it takes OTLP over HTTP on 4318, from the three agents
+# only; keeps the traces on its volume for TEMPO_RETENTION; and answers TraceQL (search and
+# metrics) on 3200, for Grafana only. Tempo 3 computes TraceQL metrics from the traces
+# themselves (the last 15 minutes from memory, older ones from the volume): no
+# metrics-generator and no Prometheus. (The "local-blocks" processor of Tempo 2 is gone in 3.0.)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${TEMPO}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+data:
+  tempo.yaml: |
+    target: all
+    # Grafana may ask for search and metrics results as a stream, on the same port.
+    stream_over_http_enabled: true
+    # GOMEMLIMIT at 80 % of the memory limit of the container.
+    memory:
+      automemlimit_enabled: true
+    server:
+      http_listen_port: ${TEMPO_HTTP_PORT}
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            http:
+              endpoint: "0.0.0.0:${TEMPO_OTLP_PORT}"
+    # The querier and the backend worker run in this process and reach the rest on its own
+    # gRPC port (9095): said here, instead of letting Tempo guess.
+    querier:
+      frontend_worker:
+        frontend_address: 127.0.0.1:9095
+    # Retention: the backend scheduler makes the jobs, the backend worker deletes old blocks.
+    backend_scheduler:
+      provider:
+        compaction:
+          compaction:
+            block_retention: ${TEMPO_RETENTION}
+    backend_worker:
+      backend_scheduler_addr: 127.0.0.1:9095
+      compaction:
+        block_retention: ${TEMPO_RETENTION}
+    storage:
+      trace:
+        backend: local
+        wal:
+          path: /var/tempo/wal
+        local:
+          path: /var/tempo/blocks
+    # Grafana may search, and compute metrics, over everything that is kept (the defaults
+    # are 7 days for a search and 24 hours for metrics).
+    query_frontend:
+      search:
+        max_duration: ${TEMPO_RETENTION}
+      metrics:
+        max_duration: ${TEMPO_RETENTION}
+    # No call home (and the network rule lets it call nobody).
+    usage_report:
+      reporting_enabled: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${TEMPO}
+  labels: { app: ${TEMPO}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: ${TEMPO} }
+  template:
+    metadata:
+      labels: { app: ${TEMPO}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+      annotations:
+        # The SHA-256 of the config above (deploy.sh): a new config starts a new pod.
+        wattson/tempo-config: "${TEMPO_CONFIG_SHA256}"
+    spec:
+      serviceAccountName: ${TEMPO}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      # The image is distroless and runs as 10001, like the agents.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: tempo
+          image: ${TEMPO_IMAGE}
+          args: [-config.file=/etc/tempo/tempo.yaml]
+          ports:
+            - { name: otlp-http, containerPort: ${TEMPO_OTLP_PORT} }
+            - { name: http, containerPort: ${TEMPO_HTTP_PORT} }
+          # /ready answers 200 when it takes traces and answers queries (2 s in Docker).
+          startupProbe:
+            httpGet: { path: /ready, port: http }
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /ready, port: http }
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /ready, port: http }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests: { cpu: ${TEMPO_REQ_CPU}, memory: ${TEMPO_REQ_MEMORY} }
+            limits: { cpu: ${TEMPO_LIM_CPU}, memory: ${TEMPO_LIM_MEMORY} }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: config, mountPath: /etc/tempo, readOnly: true }
+            - { name: data, mountPath: /var/tempo }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: config
+          configMap: { name: ${TEMPO} }
+        - name: data
+          persistentVolumeClaim: { claimName: ${APP_NAME}-tempo-data }
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${TEMPO}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+spec:
+  type: ClusterIP
+  selector: { app: ${TEMPO} }
+  ports:
+    - { name: otlp-http, protocol: TCP, port: ${TEMPO_OTLP_PORT}, targetPort: otlp-http }
+    - { name: http, protocol: TCP, port: ${TEMPO_HTTP_PORT}, targetPort: http }
+# end: telemetry
+---
+# ---- network rules (docs/design.md 10.7) ----------------------------------------------
+# The orchestrator: nothing comes in (kubectl port-forward does not pass the pod's network
+# interface, so it still works); it may ask DNS, the triage agent and the knowledge agent
+# (with KubeAI also the KubeAI proxy: the small model of the Guard; with INJECTION_MODE warn or
+# cut the shield; and, with TELEMETRY=on, send traces to Tempo, the same for the two others).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${ORCHESTRATOR}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: orchestrator }
+spec:
+  podSelector:
+    matchLabels: { app: ${ORCHESTRATOR} }
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - podSelector: { matchLabels: { app: ${TRIAGE} } }
+      ports:
+        - { protocol: TCP, port: ${TRIAGE_PORT} }
+    - to:
+        - podSelector: { matchLabels: { app: ${KNOWLEDGE} } }
+      ports:
+        - { protocol: TCP, port: ${KNOWLEDGE_PORT} }
+    # begin: shield
+    # The injection model (the shield).
+    - to:
+        - podSelector: { matchLabels: { app: ${SHIELD} } }
+      ports:
+        - { protocol: TCP, port: ${SHIELD_PORT} }
+    # end: shield
+    # begin: kubeai
+    # The small model of the Guard, through the KubeAI proxy: the port of the proxy's pod, as for
+    # the triage agent (its Service listens on 80, and Calico checks the pod's port).
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ${KUBEAI_NAMESPACE} } }
+          podSelector: { matchLabels: { app.kubernetes.io/name: kubeai } }
+      ports:
+        - { protocol: TCP, port: ${KUBEAI_PROXY_PORT} }
+    # end: kubeai
+    # begin: telemetry
+    # The traces, to Tempo (OTLP over HTTP).
+    - to:
+        - podSelector: { matchLabels: { app: ${TEMPO} } }
+      ports:
+        - { protocol: TCP, port: ${TEMPO_OTLP_PORT} }
+    # end: telemetry
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+        - ipBlock: { cidr: "${NODE_LOCAL_DNS}/32" }  # optional: NODE_LOCAL_DNS
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+# begin: sidecar
+# The triage agent: only the orchestrator comes in. Out: DNS, and HTTPS for the model
+# download of the init container (a rule holds for the whole pod, not for one container).
+# end: sidecar
+# begin: kubeai
+# The triage agent: only the orchestrator comes in. Out: DNS, and the KubeAI proxy (the pods
+# "app.kubernetes.io/name: kubeai" in the namespace of KubeAI). No HTTPS: nothing is downloaded.
+# end: kubeai
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${TRIAGE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+spec:
+  podSelector:
+    matchLabels: { app: ${TRIAGE} }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: ${ORCHESTRATOR} } }
+      ports:
+        - { protocol: TCP, port: ${TRIAGE_PORT} }
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+        - ipBlock: { cidr: "${NODE_LOCAL_DNS}/32" }  # optional: NODE_LOCAL_DNS
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    # begin: sidecar
+    - ports:
+        - { protocol: TCP, port: 443 }
+    # end: sidecar
+    # begin: kubeai
+    # The port of the proxy's pod: its Service listens on 80, and Calico checks the pod's port.
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ${KUBEAI_NAMESPACE} } }
+          podSelector: { matchLabels: { app.kubernetes.io/name: kubeai } }
+      ports:
+        - { protocol: TCP, port: ${KUBEAI_PROXY_PORT} }
+    # end: kubeai
+    # begin: telemetry
+    # The traces, to Tempo (OTLP over HTTP).
+    - to:
+        - podSelector: { matchLabels: { app: ${TEMPO} } }
+      ports:
+        - { protocol: TCP, port: ${TEMPO_OTLP_PORT} }
+    # end: telemetry
+---
+# The knowledge agent: only the orchestrator comes in. Out: DNS, and HTTPS to Grimoire (with
+# COGNEE_RECALL=on also cognee-mcp in the pod ${COGNEE}, on its MCP port only).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${KNOWLEDGE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: knowledge }
+spec:
+  podSelector:
+    matchLabels: { app: ${KNOWLEDGE} }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: ${ORCHESTRATOR} } }
+      ports:
+        - { protocol: TCP, port: ${KNOWLEDGE_PORT} }
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+        - ipBlock: { cidr: "${NODE_LOCAL_DNS}/32" }  # optional: NODE_LOCAL_DNS
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - ports:
+        - { protocol: TCP, port: 443 }
+    # begin: cognee
+    # "Seen before": cognee-mcp (the tool "recall"). The rule of that pod (k8s/cognee/cognee.yaml)
+    # lets the knowledge agent in on this port.
+    - to:
+        - podSelector: { matchLabels: { app: ${COGNEE} } }
+      ports:
+        - { protocol: TCP, port: ${COGNEE_PORT} }  # cognee-mcp
+    # end: cognee
+    # begin: telemetry
+    # The traces, to Tempo (OTLP over HTTP).
+    - to:
+        - podSelector: { matchLabels: { app: ${TEMPO} } }
+      ports:
+        - { protocol: TCP, port: ${TEMPO_OTLP_PORT} }
+    # end: telemetry
+# begin: shield
+---
+# The shield: only the orchestrator comes in. Out: DNS, and HTTPS for the download of the model
+# files by the init container (a rule holds for the whole pod, not for one container). It sends
+# no traces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${SHIELD}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: shield }
+spec:
+  podSelector:
+    matchLabels: { app: ${SHIELD} }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: ${ORCHESTRATOR} } }
+      ports:
+        - { protocol: TCP, port: ${SHIELD_PORT} }
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+        - ipBlock: { cidr: "${NODE_LOCAL_DNS}/32" }  # optional: NODE_LOCAL_DNS
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - ports:
+        - { protocol: TCP, port: 443 }
+# end: shield
+# begin: telemetry
+---
+# Tempo: OTLP (:4318) comes in from the three agents only, TraceQL (:3200) from the namespace
+# of Grafana only. Out: DNS only; it sends nothing anywhere.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${TEMPO}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: tempo }
+spec:
+  podSelector:
+    matchLabels: { app: ${TEMPO} }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: ${ORCHESTRATOR} } }
+        - podSelector: { matchLabels: { app: ${TRIAGE} } }
+        - podSelector: { matchLabels: { app: ${KNOWLEDGE} } }
+      ports:
+        - { protocol: TCP, port: ${TEMPO_OTLP_PORT} }
+    - from:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ${GRAFANA_NAMESPACE} } }
+      ports:
+        - { protocol: TCP, port: ${TEMPO_HTTP_PORT} }
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+        - ipBlock: { cidr: "${NODE_LOCAL_DNS}/32" }  # optional: NODE_LOCAL_DNS
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+# end: telemetry

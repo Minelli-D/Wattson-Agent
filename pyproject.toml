@@ -1,0 +1,47 @@
+[project]
+name = "wattson"
+version = "0.1.0"
+description = "Wattson Agent, a personal engineering agent: Strands agents talking A2A on Kubernetes, Grimoire as knowledge, a small CPU model for triage, Claude Code on the laptop, a human approval before every task."
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "strands-agents[a2a,otel,openai,cedar]==1.62.0",
+  "opentelemetry-instrumentation-httpx",
+  "opentelemetry-instrumentation-starlette",
+  "httpx>=0.28.1,<1",
+  "pydantic>=2.10,<3",
+  "rich>=13,<16",
+]
+
+[project.scripts]
+wattson = "wattson.cli.main:main"
+wattson-orchestrator = "wattson.agents.orchestrator.app:main"
+wattson-triage = "wattson.agents.triage.app:main"
+wattson-knowledge = "wattson.agents.knowledge.app:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.8"]
+# The image of wattson-shield (Dockerfile.shield) holds only these, from uv.lock, and the one
+# file src/wattson/shield/server.py. Not installed by default: uv sync --group shield.
+shield = ["onnxruntime>=1.22,<2", "tokenizers>=0.21,<1", "numpy>=2,<3", "starlette", "uvicorn"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wattson"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101"]

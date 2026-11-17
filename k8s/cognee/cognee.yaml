@@ -1,0 +1,356 @@
+# Cognee on Kubernetes: the memory for Claude Code, and its web UI (docs/cognee.md).
+# k8s/cognee.sh fills in the ${...} values from settings.env (COGNEE_*) and applies this file. It
+# is not part of k8s/wattson.yaml: k8s/deploy.sh and k8s/remove.sh never touch it.
+#
+#   laptop, through kubectl port-forward only (no Ingress, no NodePort, no LoadBalancer):
+#     Claude Code ──► :${COGNEE_PORT} container "mcp" (cognee-mcp in API mode, /mcp)
+#     browser     ──► :${COGNEE_UI_PORT} container "ui"  (Cognee's web UI, Next.js)
+#     browser     ──► :${COGNEE_API_PORT} container "api" (Cognee's API server; the pages call it)
+#   inside the pod: mcp ──► api on 127.0.0.1:${COGNEE_API_PORT}, with its API key
+#   Wattson's knowledge agent ──► the Service ${COGNEE}:${COGNEE_PORT}, the tool "recall" only
+#   ("seen before", COGNEE_RECALL=on; its own rule in k8s/wattson.yaml lets it out to it). The
+#   network rule below lets the orchestrator in too; it does not use it.
+#
+# One pod, three containers of two images. The API server is the ONLY process that opens the
+# stores: SQLite (metadata), LanceDB (vectors) and Ladybug (graph), files on the volume
+# ${COGNEE}-data. Only its container mounts the volume. cognee-mcp and the UI go through its
+# HTTP API. Local models only, baked into the image and loaded by the API server: GLiNER builds
+# the graph, fastembed makes the embeddings. No LLM, no outside service, no telemetry: the pod
+# may only ask DNS.
+#
+# One replica and "Recreate": the stores are files with one writer; two pods on one volume
+# would break them.
+#
+# The Secret ${COGNEE} is made once by k8s/cognee.sh (random values; never in this file): the
+# password of the UI login, the API key of the MCP container, and the keys that sign the login
+# tokens.
+#
+# A line that ends with "# optional: NAME" is left out when the setting NAME is empty.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${COGNEE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: cognee }
+automountServiceAccountToken: false
+---
+# The memory: the databases of cognee (SQLite, LanceDB, Ladybug), the stored notes, the users
+# and API keys, and /data/code for code you copy in for code_search. Cluster admins can read it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${COGNEE}-data
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: cognee }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ${STORAGE_CLASS}
+  resources:
+    requests: { storage: ${COGNEE_SIZE} }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${COGNEE}
+  labels: { app: ${COGNEE}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: cognee }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: ${COGNEE} }
+  template:
+    metadata:
+      labels: { app: ${COGNEE}, app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: cognee }
+    spec:
+      serviceAccountName: ${COGNEE}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      # Room to finish a write that is under way: the API server drains its background work for
+      # up to 30 s, then closes the stores (Ladybug writes its log to disk).
+      terminationGracePeriodSeconds: 60
+      imagePullSecrets:  # optional: PULL_SECRET
+        - name: ${PULL_SECRET}  # optional: PULL_SECRET
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        # ---- api: Cognee's API server, the only one that opens the stores -----------------
+        # The start file (api_start.py in the image) stores the API key of the container "mcp",
+        # then serves cognee.api.client:app. It listens on the same port number as the laptop's
+        # port-forward: the UI's server calls it at the address the browser uses
+        # (COGNEE_BACKEND_URL of the container "ui"), and inside the pod that is this port.
+        - name: api
+          image: ${COGNEE_IMAGE}
+          command: [/app/.venv/bin/python, /app/wattson/api_start.py]
+          ports:
+            - { name: api, containerPort: ${COGNEE_API_PORT} }
+          env:
+            - { name: HTTP_API_PORT, value: "${COGNEE_API_PORT}" }
+            - { name: ENV, value: prod }
+            # ---- where the memory lives: the volume ----
+            - { name: SYSTEM_ROOT_DIRECTORY, value: /data/cognee/system }
+            - { name: DATA_ROOT_DIRECTORY, value: /data/cognee/data }
+            - { name: CACHE_ROOT_DIRECTORY, value: /data/cognee/cache }
+            - { name: COGNEE_REPOS_DIR, value: /data/cognee/repos }
+            # The logs go to the pod's output only (kubectl logs), not to files on the volume.
+            - { name: COGNEE_LOG_FILE, value: "false" }
+            - { name: COGNEE_LOGS_DIR, value: /tmp/logs }
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+            # The only folders the server may read by path (besides cognee's own): /tmp and
+            # /data/code, for code you copy in. Never the image, never /proc.
+            - { name: COGNEE_ALLOWED_LOCAL_FILE_ROOTS, value: "/tmp:/data/code" }
+            # No server-side fetch of URLs or git clones (the network rule blocks them too).
+            - { name: ALLOW_HTTP_REQUESTS, value: "false" }
+            # ---- the login: on ----
+            # The same as cognee-mcp alone used: one owner per dataset (the default user), each
+            # dataset its own vector and graph files. With it on, every call needs a login (the
+            # UI's cookie) or an API key (the MCP container's).
+            - { name: ENABLE_BACKEND_ACCESS_CONTROL, value: "true" }
+            - { name: REQUIRE_AUTHENTICATION, value: "true" }
+            # The UI logs in as default_user@example.com with this password (set once, on the
+            # first start: a stored password is never changed by it).
+            - { name: DEFAULT_USER_PASSWORD, valueFrom: { secretKeyRef: { name: "${COGNEE}", key: DEFAULT_USER_PASSWORD } } }
+            - { name: COGNEE_MCP_API_KEY, valueFrom: { secretKeyRef: { name: "${COGNEE}", key: COGNEE_MCP_API_KEY } } }
+            # The keys that sign the login tokens: fixed, so a login survives a restart.
+            - { name: FASTAPI_USERS_JWT_SECRET, valueFrom: { secretKeyRef: { name: "${COGNEE}", key: FASTAPI_USERS_JWT_SECRET } } }
+            - { name: FASTAPI_USERS_RESET_PASSWORD_TOKEN_SECRET, valueFrom: { secretKeyRef: { name: "${COGNEE}", key: FASTAPI_USERS_RESET_PASSWORD_TOKEN_SECRET } } }
+            - { name: FASTAPI_USERS_VERIFICATION_TOKEN_SECRET, valueFrom: { secretKeyRef: { name: "${COGNEE}", key: FASTAPI_USERS_VERIFICATION_TOKEN_SECRET } } }
+            # The cookie of the login, with a name of its own (a cookie of 127.0.0.1 goes to every
+            # port of the laptop).
+            - { name: AUTH_TOKEN_COOKIE_NAME, value: wattson_cognee_auth }
+            # The pages come from the UI's port on the laptop; only they may call the API from a
+            # browser (CORS). Open the UI at http://127.0.0.1:${COGNEE_UI_LOCAL_PORT}: the same host
+            # as the API's address, so the browser sends the login cookie to the API.
+            - { name: CORS_ALLOWED_ORIGINS, value: "http://127.0.0.1:${COGNEE_UI_LOCAL_PORT}" }
+            - { name: BACKGROUND_DRAIN_TIMEOUT_SECONDS, value: "30" }
+            # ---- no LLM: local models only ----
+            - { name: LLM_API_KEY, value: "" }
+            - { name: GRAPH_EXTRACTOR, value: gliner_demo }
+            - { name: GLINER_AUTO_INSTALL, value: "false" }
+            - { name: GLINER_INFERENCE_THREADS, value: "1" }
+            - { name: EMBEDDING_PROVIDER, value: fastembed }
+            - { name: EMBEDDING_MODEL, value: BAAI/bge-small-en-v1.5 }
+            - { name: EMBEDDING_DIMENSIONS, value: "384" }
+            # As many threads as the CPU limit has whole cores (torch, for GLiNER).
+            - { name: OMP_NUM_THREADS, value: "${COGNEE_THREADS}" }
+            - { name: MKL_NUM_THREADS, value: "${COGNEE_THREADS}" }
+            - { name: TOKENIZERS_PARALLELISM, value: "false" }
+            # The page cache of the graph store: 512 MiB (its default is 32 GiB).
+            - { name: KUZU_BUFFER_POOL_SIZE, value: "536870912" }
+            # ---- nothing leaves the pod: telemetry and update checks off ----
+            - { name: TELEMETRY_DISABLED, value: "1" }
+            - { name: COGNEE_TRACING_ENABLED, value: "false" }
+            - { name: USAGE_LOGGING, value: "false" }
+            - { name: HF_HUB_OFFLINE, value: "1" }
+            - { name: TRANSFORMERS_OFFLINE, value: "1" }
+            - { name: HF_HUB_DISABLE_TELEMETRY, value: "1" }
+            - { name: LITELLM_LOCAL_MODEL_COST_MAP, value: "True" }
+            - { name: ENOLA_NO_UPDATE_CHECK, value: "1" }
+            - { name: RUNTIME__DLTHUB_TELEMETRY, value: "false" }
+            - { name: DO_NOT_TRACK, value: "1" }
+          # /health answers once the migrations are done and the stores open (it checks SQLite,
+          # LanceDB, Ladybug and the files). The models load at the first remember, not at start.
+          # A long budget for the first start: up to 10 minutes.
+          startupProbe:
+            httpGet: { path: /health, port: api }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health, port: api }
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 4
+          # Generous: a long ingestion keeps the CPU busy, and a restart in the middle of a write
+          # is worse than a slow answer.
+          livenessProbe:
+            httpGet: { path: /health, port: api }
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests: { cpu: ${COGNEE_REQ_CPU}, memory: ${COGNEE_REQ_MEMORY} }
+            limits: { cpu: ${COGNEE_LIM_CPU}, memory: ${COGNEE_LIM_MEMORY} }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: api-tmp, mountPath: /tmp }
+        # ---- mcp: cognee-mcp in API mode, for Claude Code ------------------------------
+        # It calls the API server on localhost with its API key and never opens a store: it has
+        # no volume. Streamable HTTP at /mcp. 0.0.0.0: the Service and the probes reach the pod's
+        # address.
+        - name: mcp
+          image: ${COGNEE_IMAGE}
+          command: [cognee-mcp]
+          args: [--transport, http, --host, "0.0.0.0", --port, "${COGNEE_PORT}", --log-level, info, --no-migration]
+          ports:
+            - { name: mcp, containerPort: ${COGNEE_PORT} }
+          env:
+            # ---- API mode: the API server of this pod ----
+            - { name: COGNEE_BASE_URL, value: "http://127.0.0.1:${COGNEE_API_PORT}" }
+            - { name: COGNEE_API_KEY, valueFrom: { secretKeyRef: { name: "${COGNEE}", key: COGNEE_MCP_API_KEY } } }
+            - { name: COGNEE_API_AUTH_SCHEME, value: x-api-key }
+            - { name: COGNEE_LOG_FILE, value: "false" }
+            - { name: COGNEE_LOGS_DIR, value: /tmp/logs }
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+            # A path a client gives is read only under /tmp of this container (nothing is there).
+            - { name: COGNEE_ALLOWED_LOCAL_FILE_ROOTS, value: /tmp }
+            - { name: ALLOW_HTTP_REQUESTS, value: "false" }
+            - { name: LLM_API_KEY, value: "" }
+            # ---- nothing leaves the pod ----
+            - { name: TELEMETRY_DISABLED, value: "1" }
+            - { name: COGNEE_TRACING_ENABLED, value: "false" }
+            - { name: USAGE_LOGGING, value: "false" }
+            - { name: HF_HUB_OFFLINE, value: "1" }
+            - { name: HF_HUB_DISABLE_TELEMETRY, value: "1" }
+            - { name: LITELLM_LOCAL_MODEL_COST_MAP, value: "True" }
+            - { name: FASTMCP_CHECK_FOR_UPDATES, value: "off" }
+            - { name: DO_NOT_TRACK, value: "1" }
+            # ---- the MCP endpoint ----
+            # The Host headers it answers, besides localhost and 127.0.0.1 (the port-forward):
+            # the names of its Service, for the Wattson pods later. Anything else gets 421.
+            - { name: MCP_ALLOWED_HOSTS, value: "${COGNEE}:*,${COGNEE}.${K8S_NAMESPACE}:*,${COGNEE}.${K8S_NAMESPACE}.svc:*,${COGNEE}.${K8S_NAMESPACE}.svc.cluster.local:*" }
+            # No browser may call it (no CORS origin).
+            - { name: MCP_CORS_ALLOW_ORIGINS, value: "" }
+            - { name: COGNEE_MCP_TOOL_MODE, value: default }
+          # /health answers when the server listens. The Host header must be one the server
+          # accepts (the probe would send the pod's IP).
+          startupProbe:
+            httpGet: { path: /health, port: mcp, httpHeaders: [{ name: Host, value: "localhost:${COGNEE_PORT}" }] }
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health, port: mcp, httpHeaders: [{ name: Host, value: "localhost:${COGNEE_PORT}" }] }
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 4
+          livenessProbe:
+            httpGet: { path: /health, port: mcp, httpHeaders: [{ name: Host, value: "localhost:${COGNEE_PORT}" }] }
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests: { cpu: ${COGNEE_MCP_REQ_CPU}, memory: ${COGNEE_MCP_REQ_MEMORY} }
+            limits: { cpu: ${COGNEE_MCP_LIM_CPU}, memory: ${COGNEE_MCP_LIM_MEMORY} }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: mcp-tmp, mountPath: /tmp }
+        # ---- ui: Cognee's web UI ----------------------------------------------------
+        # The browser gets the pages here, then calls the API server itself at
+        # COGNEE_BACKEND_URL (the laptop's port-forward). A few pages are served through this
+        # server, which calls the same address: inside the pod it is the container "api".
+        # This container never gets the UI password: its server would then log in by itself for
+        # a browser that sent no login.
+        - name: ui
+          image: ${COGNEE_UI_IMAGE}
+          command: [node, server.js]
+          ports:
+            - { name: ui, containerPort: ${COGNEE_UI_PORT} }
+          env:
+            # 127.0.0.1, not localhost: one address for the browser and for this server, IPv4 only
+            # (the port-forward listens on 127.0.0.1, the API server on 0.0.0.0).
+            - { name: COGNEE_BACKEND_URL, value: "http://127.0.0.1:${COGNEE_API_PORT}" }
+            - { name: PORT, value: "${COGNEE_UI_PORT}" }
+            # 0.0.0.0, not the pod's name (which Kubernetes puts in HOSTNAME): port-forward and the
+            # probes reach it.
+            - { name: HOSTNAME, value: "0.0.0.0" }
+            - { name: NODE_ENV, value: production }
+            - { name: NEXT_TELEMETRY_DISABLED, value: "1" }
+            - { name: NODE_OPTIONS, value: "--max-old-space-size=384" }
+            - { name: HOME, value: /tmp }
+            - { name: TMPDIR, value: /tmp }
+          # /api/runtime-config: the UI's own cheap answer (the backend address it uses); it
+          # calls nothing.
+          startupProbe:
+            httpGet: { path: /api/runtime-config, port: ui }
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet: { path: /api/runtime-config, port: ui }
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 4
+          livenessProbe:
+            httpGet: { path: /api/runtime-config, port: ui }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests: { cpu: ${COGNEE_UI_REQ_CPU}, memory: ${COGNEE_UI_REQ_MEMORY} }
+            limits: { cpu: ${COGNEE_UI_LIM_CPU}, memory: ${COGNEE_UI_LIM_MEMORY} }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: ui-tmp, mountPath: /tmp }
+            - { name: ui-cache, mountPath: /app/.next/cache }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: ${COGNEE}-data }
+        - name: api-tmp
+          emptyDir: { sizeLimit: 1Gi }
+        - name: mcp-tmp
+          emptyDir: { sizeLimit: 256Mi }
+        - name: ui-tmp
+          emptyDir: { sizeLimit: 64Mi }
+        - name: ui-cache
+          emptyDir: { sizeLimit: 256Mi }
+---
+# No Ingress, no NodePort: only inside the cluster, and through kubectl port-forward. Only the
+# MCP port: the API and the UI are for the port-forward of the laptop only.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${COGNEE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: cognee }
+spec:
+  type: ClusterIP
+  selector: { app: ${COGNEE} }
+  ports:
+    - { name: mcp, protocol: TCP, port: ${COGNEE_PORT}, targetPort: mcp }
+---
+# In: only the orchestrator and the knowledge agent of Wattson, and only to MCP (kubectl
+# port-forward does not pass the pod's network interface, so it reaches all three ports; the
+# containers talk to each other on localhost, which no rule needs). Out: DNS only. No LLM, no
+# download, no telemetry: everything it needs is in the images.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${COGNEE}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: cognee }
+spec:
+  podSelector:
+    matchLabels: { app: ${COGNEE} }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: ${ORCHESTRATOR} } }
+        - podSelector: { matchLabels: { app: ${KNOWLEDGE} } }
+      ports:
+        - { protocol: TCP, port: ${COGNEE_PORT} }
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+        - ipBlock: { cidr: "${NODE_LOCAL_DNS}/32" }  # optional: NODE_LOCAL_DNS
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }

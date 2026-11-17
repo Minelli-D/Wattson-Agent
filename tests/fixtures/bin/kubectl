@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""A stand-in for kubectl in the connector tests. It never talks to a cluster.
+
+- Every call is appended as one JSON line ({"args": [...], "stdin": ...}) to $FAKE_KUBECTL_LOG.
+- Contexts: $FAKE_KUBE_CONTEXTS (comma separated, default "dev,prod"); current: $FAKE_KUBE_CURRENT
+  (default "dev"; empty = none set).
+- Namespaces with a meaning: "broken" fails (NotFound), "slow" sleeps 10 s, "leaky" prints a
+  Secret manifest with data, "big" prints 3000 log lines, "empty" prints nothing (stderr note).
+- `get namespaces A B ... -o name --ignore-not-found`: every name but "missing" and those in
+  $FAKE_KUBE_MISSING_NS (comma separated).
+- --all-namespaces: tables with a NAMESPACE column (pods: 300 healthy rows, then two with a problem;
+  a name field selector finds "api" in "web" and "shop").
+- `auth can-i get secrets` answers $FAKE_KUBE_CAN_I_SECRETS (default "no").
+- With --kubeconfig, the file must exist and hold the reader token, like a real API server.
+"""
+
+import base64
+import json
+import os
+import sys
+import time
+
+READER_TOKEN = "fake-reader-token-0123456789abcdef"  # noqa: S105 - a fake
+ADMIN_TOKEN = "ADMIN-token-must-never-leak-9876543210"  # noqa: S105 - a fake
+
+argv = sys.argv[1:]
+stdin_text = sys.stdin.read() if "apply" in argv else None
+log = os.environ.get("FAKE_KUBECTL_LOG")
+if log:
+    with open(log, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"args": argv, "stdin": stdin_text}) + "\n")
+
+
+def done(out="", code=0, err=""):
+    sys.stdout.write(out)
+    sys.stderr.write(err)
+    sys.exit(code)
+
+
+kubeconfig = context = ns = None
+rest = []
+i = 0
+while i < len(argv):
+    a = argv[i]
+    if a in ("--kubeconfig", "--context", "-n") and i + 1 < len(argv):
+        if a == "--kubeconfig":
+            kubeconfig = argv[i + 1]
+        elif a == "--context":
+            context = argv[i + 1]
+        else:
+            ns = argv[i + 1]
+        i += 2
+        continue
+    if a.startswith("--request-timeout"):
+        i += 1
+        continue
+    rest.append(a)
+    i += 1
+
+if kubeconfig is not None:
+    try:
+        with open(kubeconfig, encoding="utf-8") as fh:
+            cfg = json.load(fh)
+        token = cfg["users"][0]["user"]["token"]
+    except (OSError, ValueError, KeyError, IndexError):
+        done("", 1, f"error: cannot load kubeconfig {kubeconfig}\n")
+    if token != READER_TOKEN:
+        done("", 1, "error: You must be logged in to the server (Unauthorized)\n")
+
+contexts = [c for c in os.environ.get("FAKE_KUBE_CONTEXTS", "dev,prod").split(",") if c]
+if context is not None and context not in contexts:
+    done("", 1, f'error: context "{context}" does not exist\n')
+
+head = rest[:2]
+if head == ["config", "get-contexts"]:
+    done("".join(c + "\n" for c in contexts))
+if head == ["config", "current-context"]:
+    cur = os.environ.get("FAKE_KUBE_CURRENT", "dev")
+    done(cur + "\n") if cur else done("", 1, "error: current-context is not set\n")
+if head == ["config", "view"]:
+    ctx = context or "dev"
+    view = {
+        "apiVersion": "v1",
+        "kind": "Config",
+        "clusters": [
+            {
+                "name": f"{ctx}-cluster",
+                "cluster": {
+                    "server": f"https://{ctx}.example.test:6443",
+                    "certificate-authority-data": base64.b64encode(b"FAKE CA").decode(),
+                },
+            }
+        ],
+        "users": [{"name": "admin", "user": {"token": ADMIN_TOKEN}}],
+        "contexts": [{"name": ctx, "context": {"cluster": f"{ctx}-cluster", "user": "admin"}}],
+        "current-context": ctx,
+    }
+    done(json.dumps(view))
+if rest[:1] == ["apply"]:
+    if os.environ.get("FAKE_KUBE_APPLY_FAIL"):
+        done("", 1, "Error from server (Forbidden): you cannot do that\n")
+    done(
+        "serviceaccount/wattson-reader created\n"
+        "secret/wattson-reader-token created\n"
+        "clusterrolebinding.rbac.authorization.k8s.io/wattson-reader-view created\n"
+    )
+if head == ["get", "secret"]:
+    if rest[2:3] != ["wattson-reader-token"]:
+        done("", 1, "the fake only knows the reader token secret\n")
+    done(base64.b64encode(READER_TOKEN.encode()).decode())
+if head == ["get", "namespaces"]:
+    gone = {"missing", *os.environ.get("FAKE_KUBE_MISSING_NS", "").split(",")}
+    names = [a for a in rest[2:] if not a.startswith("-") and a != "name"]
+    done("".join(f"namespace/{n}\n" for n in names if n not in gone))
+if head == ["get", "namespace"]:
+    if rest[2:3] == ["missing"]:
+        done("", 1, 'Error from server (NotFound): namespaces "missing" not found\n')
+    done(f"namespace/{rest[2]}\n")
+if head == ["auth", "can-i"]:
+    verb, res = rest[2], rest[3]
+    answer = "yes" if (verb, res) == ("get", "pods") else "no"
+    if (verb, res) == ("get", "secrets"):
+        answer = os.environ.get("FAKE_KUBE_CAN_I_SECRETS", "no")
+    done(answer + "\n", 0 if answer == "yes" else 1)
+
+if ns == "broken":
+    done("", 1, 'Error from server (NotFound): namespaces "broken" not found\n')
+if ns == "slow":
+    time.sleep(10)
+    done("too late\n")
+if ns == "leaky":
+    done(
+        "apiVersion: v1\nkind: Secret\nmetadata:\n  name: db\ntype: Opaque\ndata:\n  password: aHVudGVyMg==\n"
+    )
+if ns == "empty":
+    done("", 0, f"No resources found in {ns} namespace.\n")
+
+if "--all-namespaces" in rest:
+    selector = rest[rest.index("--field-selector") + 1] if "--field-selector" in rest else ""
+    if head == ["get", "events"]:
+        rows = [f"ns-{i % 7}  {i}m  Warning  BackOff  pod/api-{i:03d}  Back-off restarting" for i in range(60)]
+        done("NAMESPACE  LAST SEEN  TYPE  REASON  OBJECT  MESSAGE\n" + "\n".join(rows) + "\n")
+    if selector == "metadata.name=api":
+        done(
+            "NAMESPACE   NAME   READY   UP-TO-DATE   AVAILABLE   AGE\n"
+            "shop        api    0/1     1            0           2d\n"
+            "web         api    1/1     1            1           9d\n"
+        )
+    if selector.startswith("metadata.name="):
+        done("", 0, "No resources found\n")
+    if head == ["get", "pods"]:
+        out = "NAMESPACE   NAME                      READY   STATUS             RESTARTS       AGE\n"
+        for i in range(300):
+            out += f"ns-{i // 10:02d}       app-{i:04d}-5d9f8b6c5d       1/1     Running            1 (12d ago)    20d\n"
+        out += "zz-shop     api-7d9f8b6c5d-x2k4q      0/1     CrashLoopBackOff   12 (2m ago)    40m\n"
+        out += "zz-shop     worker-6c5d7d9f8b-a1b2c   1/1     Running            3 (45s ago)    40m\n"
+        done(out)
+    if head == ["get", "deployments"]:
+        done(
+            "NAMESPACE   NAME     READY   UP-TO-DATE   AVAILABLE   AGE\n"
+            "shop        api      0/1     1            0           2d\n"
+            "web         api      1/1     1            1           9d\n"
+        )
+if head == ["get", "events"]:
+    rows = [
+        f"{i}m  Warning  BackOff  pod/api-{i:03d}  Back-off restarting failed container" for i in range(60)
+    ]
+    done("LAST SEEN  TYPE  REASON  OBJECT  MESSAGE\n" + "\n".join(rows) + "\n")
+if rest[:1] == ["get"]:
+    done(
+        "NAME                   READY   STATUS             RESTARTS   AGE   IP          NODE\n"
+        "api-7d9f8b6c5d-x2k4q   0/1     CrashLoopBackOff   12         40m   10.0.0.12   node-1\n"
+    )
+if rest[:1] == ["describe"]:
+    done(
+        "Name:         api-7d9f8b6c5d-x2k4q\n"
+        "Namespace:    web\n"
+        "Containers:\n"
+        "  api:\n"
+        "    Environment:\n"
+        "      DB_PASSWORD:  s3cr3t-Value-123\n"
+        "      LOG_LEVEL:    debug\n"
+    )
+if rest[:1] == ["logs"]:
+    if ns == "big":
+        done(
+            "".join(
+                f"2026-10-22T10:{i // 60 % 60:02d}:{i % 60:02d}Z line {i:05d} " + "x" * 40 + "\n"
+                for i in range(3000)
+            )
+        )
+    done(
+        "2026-10-22T10:00:00Z starting api\n"
+        "2026-10-22T10:00:01Z calling upstream with Authorization: Bearer fakeBearer0123456789abcdefXYZ\n"
+        "2026-10-22T10:00:02Z error: connection refused\n"
+    )
+if rest[:1] == ["rollout"]:
+    done('Waiting for deployment "api" rollout to finish: 0 of 1 updated replicas are available...\n')
+
+done("", 1, f"fake kubectl: unknown command {rest}\n")

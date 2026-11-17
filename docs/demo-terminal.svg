@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="640" viewBox="0 0 1100 640">
+  <title>Wattson Agent: example terminal session (synthetic data)</title>
+  <rect width="1100" height="640" rx="12" fill="#1e1e2e"/>
+  <rect width="1100" height="40" rx="12" fill="#2b2b3d"/>
+  <rect y="28" width="1100" height="12" fill="#2b2b3d"/>
+  <circle cx="24" cy="20" r="7" fill="#ff5f57"/>
+  <circle cx="46" cy="20" r="7" fill="#febc2e"/>
+  <circle cx="68" cy="20" r="7" fill="#28c840"/>
+  <text x="550" y="25" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" fill="#a6adc8" text-anchor="middle">wattson: example session (synthetic data)</text>
+  <g font-family="DejaVu Sans Mono, Consolas, monospace" font-size="15">
+    <text x="24" y="80" fill="#a6e3a1">$ <tspan fill="#cdd6f4">wattson ask "why does the api deployment keep restarting?" --cluster my-cluster --namespace web</tspan></text>
+
+    <text x="24" y="116" fill="#89b4fa">[1/9] start_task        </text><text x="262" y="116" fill="#cdd6f4">task 7f3a · mode enforce</text>
+    <text x="24" y="140" fill="#89b4fa">[2/9] triage            </text><text x="262" y="140" fill="#cdd6f4">devops-investigation · confidence 0.93</text>
+    <text x="24" y="164" fill="#89b4fa">[3/9] Grimoire          </text><text x="262" y="164" fill="#cdd6f4">k8s-pod-crashloop, k8s-app-errors-in-logs</text>
+    <text x="24" y="188" fill="#89b4fa">[4/9] guard             </text><text x="262" y="188" fill="#a6e3a1">ok · no rule matched · shield score 0.04</text>
+    <text x="24" y="212" fill="#89b4fa">[5/9] questions         </text><text x="262" y="212" fill="#cdd6f4">none needed</text>
+    <text x="24" y="236" fill="#89b4fa">[6/9] evidence          </text><text x="262" y="236" fill="#cdd6f4">read-only: get pods · describe · logs --previous</text>
+    <text x="24" y="260" fill="#89b4fa">[7/9] prompt            </text><text x="262" y="260" fill="#cdd6f4">built from a fixed template (you can edit it)</text>
+
+    <text x="24" y="300" fill="#f9e2af">Prompt for Claude Code, shown before anything runs:</text>
+    <rect x="24" y="312" width="1052" height="112" rx="6" fill="#181825" stroke="#45475a"/>
+    <text x="40" y="338" fill="#cdd6f4">Pod api-7d9f6c-x2k4q in namespace web restarted 14 times (CrashLoopBackOff, exit code 1).</text>
+    <text x="40" y="362" fill="#cdd6f4">Logs before the restart: "DATABASE_URL is not set". The deployment has no matching env entry.</text>
+    <text x="40" y="386" fill="#cdd6f4">Find the config change that removed it and propose a fix. Do not apply it.</text>
+
+    <text x="24" y="460" fill="#89b4fa">[8/9] approval          </text><text x="262" y="460" fill="#f9e2af">send this prompt to Claude Code? type yes or no: yes</text>
+    <text x="24" y="484" fill="#89b4fa">[9/9] Claude Code       </text><text x="262" y="484" fill="#cdd6f4">runs in this repo · Claude Code asks its own permissions</text>
+
+    <text x="24" y="530" fill="#a6e3a1">done · task 7f3a · 9 steps · traces in Grafana (no prompt text, no logs)</text>
+    <text x="24" y="570" fill="#6c7086"># every value above is example data, not a real cluster</text>
+  </g>
+</svg>

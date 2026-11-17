@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""A stand-in for the Claude Code CLI in the connector tests. It never calls a model.
+
+- Every call is appended as one JSON line ({"args", "stdin", "cwd"}) to $FAKE_CLAUDE_LOG.
+- It writes a session file like the real one: $WATTSON_CLAUDE_HOME/projects/<cwd with every
+  non-alphanumeric char as "-">/<session id>.jsonl (it refuses to run without WATTSON_CLAUDE_HOME,
+  so a test can never write into the real ~/.claude).
+- --session-id <id>: that id. --resume <id>: that id; with --fork-session a new id, and the old
+  lines are copied first (with their old timestamps), as Claude Code does.
+- -p: the prompt is read from stdin and a result JSON is printed.
+- $FAKE_CLAUDE_MODE: ok (default), fail, noreply, sleep, stubborn (ignores SIGTERM), signal,
+  secret (the reply holds a token), error_result, denials.
+"""
+
+import json
+import os
+import re
+import shutil
+import signal
+import sys
+import time
+import uuid
+from datetime import UTC, datetime
+
+argv = sys.argv[1:]
+mode = os.environ.get("FAKE_CLAUDE_MODE", "ok")
+headless = "-p" in argv or "--print" in argv
+stdin_text = sys.stdin.read() if headless else None
+
+log = os.environ.get("FAKE_CLAUDE_LOG")
+if log:
+    with open(log, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"args": argv, "stdin": stdin_text, "cwd": os.getcwd()}) + "\n")
+
+home = os.environ.get("WATTSON_CLAUDE_HOME")
+if not home:
+    sys.stderr.write("fake claude: WATTSON_CLAUDE_HOME is not set\n")
+    sys.exit(3)
+
+WITH_VALUE = {"--resume", "-r", "--session-id", "--output-format", "--permission-mode", "--model"}
+opts: dict[str, str | bool] = {}
+positional: list[str] = []
+i = 0
+while i < len(argv):
+    a = argv[i]
+    if a == "--":
+        positional += argv[i + 1 :]
+        break
+    if a in WITH_VALUE:
+        opts[a] = argv[i + 1]
+        i += 2
+        continue
+    if a.startswith("-"):
+        opts[a] = True
+        i += 1
+        continue
+    positional.append(a)
+    i += 1
+
+prompt = stdin_text if headless else (positional[-1] if positional else "")
+resume = opts.get("--resume") or opts.get("-r")
+fork = bool(opts.get("--fork-session"))
+project = os.path.join(home, "projects", re.sub(r"[^A-Za-z0-9]", "-", os.getcwd()))
+os.makedirs(project, exist_ok=True)
+
+
+def now() -> str:
+    return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+if resume:
+    old = os.path.join(project, f"{resume}.jsonl")
+    if not os.path.exists(old):
+        sys.stderr.write(f"No conversation found with session ID: {resume}\n")
+        sys.exit(1)
+    sid = str(uuid.uuid4()) if fork else str(resume)
+    if fork:
+        shutil.copyfile(old, os.path.join(project, f"{sid}.jsonl"))
+else:
+    sid = str(opts.get("--session-id") or uuid.uuid4())
+path = os.path.join(project, f"{sid}.jsonl")
+
+
+def write(obj: dict) -> None:
+    base = {
+        "isSidechain": False,
+        "sessionId": sid,
+        "cwd": os.getcwd(),
+        "uuid": str(uuid.uuid4()),
+        "timestamp": now(),
+        "userType": "external",
+        "version": "fake",
+    }
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps({**base, **obj}, separators=(",", ":")) + "\n")
+
+
+if mode == "sleep":
+    time.sleep(60)
+if mode == "stubborn":
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    time.sleep(60)
+if mode == "fail":
+    sys.stderr.write("fake claude: something broke\n")
+    sys.exit(2)
+
+write({"type": "user", "message": {"role": "user", "content": prompt}, "promptId": str(uuid.uuid4())})
+if mode == "signal":
+    os.kill(os.getpid(), signal.SIGTERM)
+if mode == "noreply":
+    sys.exit(0)
+
+reply = f"Fake reply to: {prompt[:60]}"
+if mode == "secret":
+    reply += " (used token " + "gh" + "p_FAKE0123456789abcdefFAKE0123456789ab" + ")"
+mid = "msg_" + uuid.uuid4().hex[:20]
+write(
+    {
+        "type": "assistant",
+        "message": {
+            "id": mid,
+            "role": "assistant",
+            "type": "message",
+            "content": [{"type": "thinking", "thinking": "", "signature": "x"}],
+        },
+    }
+)
+write(
+    {
+        "type": "assistant",
+        "message": {
+            "id": mid,
+            "role": "assistant",
+            "type": "message",
+            "content": [{"type": "text", "text": reply}],
+        },
+    }
+)
+write({"type": "system", "subtype": "turn_duration", "durationMs": 5})
+
+if headless:
+    result = {
+        "type": "result",
+        "subtype": "success",
+        "is_error": False,
+        "duration_ms": 5,
+        "num_turns": 1,
+        "result": reply,
+        "session_id": sid,
+        "total_cost_usd": 0.0,
+        "permission_denials": [],
+    }
+    if mode == "error_result":
+        result.update(subtype="error_during_execution", is_error=True, result="the model is overloaded")
+    if mode == "denials":
+        result["permission_denials"] = [
+            {"tool_name": "Bash", "tool_use_id": "toolu_1", "tool_input": {"command": "kubectl apply -f x"}},
+            {"tool_name": "Bash", "tool_use_id": "toolu_2", "tool_input": {"command": "rm x"}},
+            {"tool_name": "Edit", "tool_use_id": "toolu_3", "tool_input": {"file_path": "a.py"}},
+        ]
+    print(json.dumps(result))
+sys.exit(0)

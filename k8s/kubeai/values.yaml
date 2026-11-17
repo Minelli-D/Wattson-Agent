@@ -1,0 +1,111 @@
+# The Helm values of KubeAI for wattson: the chart "kubeai" 0.24.0 (github.com/kubeai-project/kubeai).
+# k8s/kubeai.sh fills in ${LLAMA_IMAGE} from settings.env and installs the chart with these
+# values; only what differs from the chart's own values is here.
+#
+# ON A SHARED CLUSTER, read this first. The chart installs:
+#   - for the WHOLE cluster: the CustomResourceDefinition models.kubeai.org (uninstalling the
+#     chart or deleting the CRD deletes every Model), and the ClusterRole "kubeai";
+#   - in the namespace of KubeAI (KUBEAI_NAMESPACE): the operator, which is also the
+#     OpenAI-compatible proxy (Deployment and Service "kubeai", :80 -> pod :8000), two
+#     ServiceAccounts, a RoleBinding, two ConfigMaps, and the model pods it starts.
+# The operator acts only in its own namespace (watchNamespaces below: a RoleBinding there,
+# no ClusterRoleBinding). Nothing in the namespace "grimoire" is touched.
+
+# The CRD of the Model: needed.
+crds:
+  enabled: true
+
+# Only the namespace of KubeAI. ["*"] would bind the ClusterRole to the whole cluster.
+watchNamespaces: []
+
+# No web chat UI (the chart's default installs Open WebUI, without a login).
+open-webui:
+  enabled: false
+
+# The operator and proxy, pinned by digest (v0.24.0 is the appVersion of the chart).
+image:
+  tag: "v0.24.0@sha256:473c0a7bf93d3072c698fda0b6f9a113abd27ebf230eb31f802c1d4398e0b754"
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile: { type: RuntimeDefault }
+
+# The chart sets none. Small: it routes a few requests and watches one Model.
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { cpu: "1", memory: 512Mi }
+
+# The llama.cpp engine of KubeAI ("engine: LlamaCpp" in the Model) runs the same llama.cpp
+# server image as the old sidecar: LLAMA_IMAGE, pinned by digest (the chart has server-b10680).
+# About 0.85 GB on the node's disk, once per node. "cpu" is the image of the resource profile
+# below; "default" is used when a profile names no image. (No Ollama: the chart's own Ollama
+# image is not used by any Model here.)
+modelServers:
+  LlamaCpp:
+    images:
+      default: "${LLAMA_IMAGE}"
+      cpu: "${LLAMA_IMAGE}"
+
+# One unit of CPU work. The Model asks for 4 ("cpu-small:4"): 4 CPU reserved and 6 at most,
+# 1536 MiB reserved and 2 GiB at most - the same as LLAMA_REQUESTS / LLAMA_LIMITS of the old
+# sidecar (measured: about 1.05 GiB with the model loaded, 1.5 GiB at peak). KubeAI multiplies
+# both the requests and the limits by the count.
+resourceProfiles:
+  cpu-small:
+    imageName: "cpu"
+    requests:
+      cpu: "1"
+      memory: "384Mi"
+    limits:
+      cpu: "1500m"
+      memory: "512Mi"
+  # For the 8B model (5.35 GB file, read fully into RAM): cpu-large:4 = 4 CPU and 4 GiB reserved,
+  # 8 CPU and 8 GiB at most (each unit: 1-2 CPU, 1-2 GiB; KubeAI multiplies by 4). The 4 reserved
+  # CPU fit on node1 today; the rest is burst when the node has room.
+  cpu-large:
+    imageName: "cpu"
+    requests:
+      cpu: "1"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+  # For the 3B model (27 Oct 2026, the user's choice: more CPU for the models): cpu-burst:4 =
+  # 3 CPU and 3 GiB reserved, as with cpu-large:3, but 8 CPU at most (6 GiB). The request stays
+  # at 3, so the pod still fits the workers after it went to 0; the rest is burst when the node
+  # has room.
+  cpu-burst:
+    imageName: "cpu"
+    requests:
+      cpu: "750m"
+      memory: "768Mi"
+    limits:
+      cpu: "2"
+      memory: "1536Mi"
+
+# The autoscaler looks at the running requests every 10 s and keeps a pod while their average
+# over this window is above 0; then it waits the Model's scaleDownDelaySeconds and goes to 0.
+# 1m (the chart says 10m) so that the delay of the Model (KUBEAI_SCALE_DOWN_DELAY_SECONDS) is
+# about the whole time a pod stays up after the last request.
+modelAutoscaling:
+  interval: 10s
+  timeWindow: 1m
+
+# The model pods: not root, no capabilities, no privilege escalation, RuntimeDefault seccomp,
+# and a read-only root filesystem: llama.cpp writes the model it downloads only into the
+# emptyDir /llama-cache that KubeAI gives it (about 0.9 GB on the node's disk).
+modelServerPods:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile: { type: RuntimeDefault }
+  securityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
+
+# The model pods need no Kubernetes token.
+modelServiceAccount:
+  automount: false

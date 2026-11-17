@@ -1,0 +1,66 @@
+# The KubeAI Model of the triage agent: IBM Granite-4.2-3B, Q4_K_M, served by KubeAI's
+# llama.cpp engine on CPU. k8s/kubeai.sh fills in the ${...} values from settings.env and applies
+# it in the namespace of KubeAI (KUBEAI_NAMESPACE), after the chart (k8s/kubeai/values.yaml).
+#
+# It runs the same server as the old sidecar: the llama.cpp image LLAMA_IMAGE (values.yaml), the
+# same model file, and the same flags as measured (eval/results/). KubeAI adds the rest itself:
+#   --host 0.0.0.0 --port 8000 --alias ${KUBEAI_MODEL} --metrics -hf ${MODEL_HF_REPO}
+# then the args below (llama.cpp keeps the last value of a flag, so these win). Health: /health.
+#
+# KubeAI starts a pod for it when a request comes (minReplicas 0). At each start the pod
+# downloads the model from Hugging Face into an emptyDir (no volume): 0.9 GB, about a minute
+# in this cluster, then it loads it (about 2 s). Only then is the pod ready. The triage agent asks
+# the KubeAI proxy with "model": "${KUBEAI_MODEL}".
+apiVersion: kubeai.org/v1
+kind: Model
+metadata:
+  name: ${KUBEAI_MODEL}
+  labels: { app.kubernetes.io/part-of: ${APP_NAME}, app.kubernetes.io/component: triage }
+spec:
+  features: [TextGeneration]
+  engine: LlamaCpp
+  # The Hugging Face repo of MODEL_URL (settings.env). llama.cpp downloads the file of
+  # --hf-file below from the repo's "main" branch: it cannot pin a commit. Today "main" is the
+  # commit of MODEL_URL and the file has the SHA-256 of MODEL_SHA256; k8s/doctor.sh checks both
+  # in the running pod, and says so if IBM ever changes them.
+  url: hf://${MODEL_HF_REPO}
+  args:
+    # The file: MODEL_FILE (the same as the sidecar), not a guess from the quantization name.
+    - --hf-file
+    - ${MODEL_FILE}
+    # The flags of the sidecar, as measured: 4096 tokens of context (2048 for each of the 2
+    # slots: triage asks for the classification and the hints at the same time); 4 threads write
+    # the answer, 7 read the prompt (LLAMA_THREADS, LLAMA_BATCH_THREADS); small batches (faster
+    # on CPU); the model read into memory (not mapped); no "thinking" step; no prompt cache in
+    # RAM (its default is 8 GiB); no web page and no /slots page.
+    - -c
+    - "${LLAMA_CTX}"
+    - -t
+    - "${LLAMA_THREADS}"
+    - -tb
+    - "${LLAMA_BATCH_THREADS}"
+    - -np
+    - "2"
+    - -b
+    - "512"
+    - -ub
+    - "128"
+    - -lm
+    - none
+    - --reasoning
+    - "on"
+    - --cache-ram
+    - "0"
+    - --no-webui
+    - --no-slots
+  # 3 CPU reserved, 8 at most; 3 GiB reserved, 6 GiB at most (k8s/kubeai/values.yaml). The 3B file
+  # is 2.2 GB, read fully into RAM; 8 CPU at most keeps LLAMA_BATCH_THREADS (7) within the limit.
+  resourceProfile: cpu-burst:4
+  # 0: no pod and no CPU reserved when nobody asks; the next request waits in the proxy for a
+  # new pod: about a minute (the model download), the first time on a node also the pull of
+  # the llama.cpp image. 1: always up. (KUBEAI_MIN_REPLICAS in settings.env.)
+  minReplicas: ${KUBEAI_MIN_REPLICAS}
+  maxReplicas: 1
+  # After the last request the pod stays this long (KUBEAI_SCALE_DOWN_DELAY_SECONDS), plus the
+  # 1-minute window of the autoscaler (k8s/kubeai/values.yaml): warm for a working session.
+  scaleDownDelaySeconds: ${KUBEAI_SCALE_DOWN_DELAY_SECONDS}

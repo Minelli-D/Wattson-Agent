@@ -1,0 +1,3 @@
+"""wattson: a personal engineering agent."""
+
+__version__ = "0.1.0"
